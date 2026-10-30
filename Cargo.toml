@@ -1,0 +1,44 @@
+[package]
+name = "docspring"
+version = "4.2.0"
+authors = ["DocSpring <support@docspring.com>"]
+description = "Use DocSpring's API to programmatically fill out PDF forms, convert HTML to PDFs, merge PDFs, or request legally binding e-signatures."
+license = "MIT"
+edition = "2021"
+rust-version = "1.88"
+# Its own tests (cargo test in this directory) resolve dependencies that build with rust-version
+resolver = "3"
+readme = "README.md"
+keywords = ["docspring", "pdf", "e-signature", "api", "sdk"]
+categories = ["api-bindings"]
+# The Markdown reference is on GitHub, which the README links to
+exclude = ["docs/", ".openapi-generator/", ".openapi-generator-ignore", ".travis.yml"]
+repository = "https://github.com/DocSpring/docspring-rust"
+documentation = "https://docs.rs/docspring"
+homepage = "https://docspring.com"
+
+[dependencies]
+serde = { version = "^1.0", features = ["derive"] }
+serde_with = { version = "^3.8", default-features = false, features = ["base64", "std", "macros"] }
+serde_json = "^1.0"
+serde_repr = "^0.1"
+url = "^2.5"
+chrono = { version = "^0.4",  features = ["serde"] }
+async-trait = "^0.1"
+reqwest = { version = "^0.13", default-features = false, features = ["json", "multipart", "stream", "query", "form"] }
+mockall = { version = "^0.13", optional = true}
+bon = "^3"
+regex = "^1.10"
+hmac = "^0.12"
+sha2 = "^0.10"
+[dev-dependencies]
+tokio = { version = "^1", features = ["macros", "rt"] }
+
+[features]
+default = ["rustls"]
+native-tls = ["reqwest/native-tls"]
+rustls = ["reqwest/rustls"]
+mockall = ["dep:mockall"]
+
+[package.metadata.docs.rs]
+features = ["mockall"]
