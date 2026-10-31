@@ -1,7 +1,7 @@
 /*
  * DocSpring API
  *
- * Use DocSpring's API to programmatically fill out PDF forms, convert HTML to PDFs, merge PDFs, or request legally binding e-signatures.
+ * Use DocSpring's API to fill PDF forms, generate PDFs and Word documents from HTML or Word templates, merge PDFs, and request legally binding e-signatures.
  *
  * The version of the OpenAPI document: v2
  * Contact: DocSpring <support@docspring.com>
@@ -23,13 +23,16 @@ pub struct Template {
     /// Shown under the template's name at the top of its hosted forms, and used as their meta description. Not shown on embedded forms or signature requests.
     #[serde(rename = "description", deserialize_with = "Option::deserialize")]
     pub description: Option<String>,
-    /// `pdf`: fields placed on an uploaded PDF. `html`: a PDF rendered from HTML and SCSS. It can't be changed after the template is created.
+    /// `pdf`: fields placed on an uploaded PDF. `html`: a PDF rendered from HTML and SCSS. `docx`: a Word document with tags where the data goes, which makes Word documents or PDFs. It can't be changed after the template is created.
     #[serde(rename = "template_type")]
     pub template_type: models::TemplateType,
-    /// Whether the template can generate PDFs. HTML templates are always ready. A PDF template is ready once DocSpring has stored its PDF, made an image of each page and finished looking for fields on each page, which can be after `document.state` becomes `processed`. A PDF template with no PDF (`document` is null) isn't ready.
+    /// What each submission makes unless its request sets `output_formats`: `docx` (a Word document), `odt` (an OpenDocument file, converted from the Word document) or `pdf`. A Word template's is chosen when it's created; PDF and HTML templates always make PDFs. A Word template that encrypts its PDFs makes PDFs, because Word documents and OpenDocument files can't be password-protected.
+    #[serde(rename = "output_format")]
+    pub output_format: models::OutputFormat,
+    /// Whether the template can make documents. HTML templates are always ready. A PDF template is ready once DocSpring has stored its PDF, made an image of each page and finished looking for fields on each page, which can be after `document.state` becomes `processed`. A PDF template with no PDF (`document` is null) isn't ready. A Word template is ready once it has a Word document (a `document_url`'s has been downloaded).
     #[serde(rename = "ready")]
     pub ready: bool,
-    /// The PDF of a PDF template. Null for HTML templates, and for a PDF template that has no PDF yet.
+    /// The PDF of a PDF template, or the Word document of a Word template. Null for HTML templates, and for a PDF template that has no PDF yet. A template created from a `document_url` has one, with no file, while it's downloaded.
     #[serde(rename = "document", deserialize_with = "Option::deserialize")]
     pub document: Option<models::TemplateDocument>,
     /// The ID of the folder the template is in. Null for a template at the root. Setting it moves the template and all of its published versions.
@@ -77,7 +80,7 @@ pub struct Template {
     /// Visual forms and signature request forms show the Continue button as soon as the required fields are filled in, without visiting each optional field. The `allowSkippingOptionalFields` embed option overrides it.
     #[serde(rename = "allow_skipping_optional_fields")]
     pub allow_skipping_optional_fields: bool,
-    /// The hosted form that /templates/{template_id}/form shows when its URL has no `mode` parameter: `web` (the web form), `visual` (the visual form, where fields are filled in on the PDF) or `dual` (both, in tabs). HTML templates have no visual form, so `web` is the only value they accept.
+    /// The hosted form that /templates/{template_id}/form shows when its URL has no `mode` parameter: `web` (the web form), `visual` (the visual form, where fields are filled in on the PDF) or `dual` (both, in tabs). Only PDF templates have a visual form, so other templates accept only `web`.
     #[serde(rename = "default_form_mode")]
     pub default_form_mode: models::TemplateFormMode,
     /// Generate PDFs whose text and check fields stay fillable ("Generate Editable PDFs"). A submission's `editable` overrides it.
@@ -95,7 +98,7 @@ pub struct Template {
     /// Allow the embedded template editor to replace the template's PDF.
     #[serde(rename = "embed_edit_allow_document_replacement")]
     pub embed_edit_allow_document_replacement: bool,
-    /// Encrypt generated PDFs with `encrypt_pdfs_password`.
+    /// Encrypt generated PDFs with `encrypt_pdfs_password`. A Word template can only encrypt its PDFs when its `output_format` is `pdf`, because Word documents and OpenDocument files can't be password-protected.
     #[serde(rename = "encrypt_pdfs")]
     pub encrypt_pdfs: bool,
     /// Whether `encrypt_pdfs_password` is set.
@@ -113,7 +116,7 @@ pub struct Template {
     /// Add the audit trail to the end of PDFs signed through signature requests.
     #[serde(rename = "merge_audit_trail_pdf")]
     pub merge_audit_trail_pdf: bool,
-    /// Date fields also accept NN/NN/YYYY dates (with slashes, dashes or dots), read in the order of the template's default date format: month first for %m/%d/%Y, day first for %d/%m/%Y. When false, date fields only accept YYYY-MM-DD. Applies to PDF templates: an HTML template's date fields only accept YYYY-MM-DD. Date fields that include a time take RFC 3339 date-times either way.
+    /// Date fields also accept NN/NN/YYYY dates (with slashes, dashes or dots), read in the order of the template's default date format: month first for %m/%d/%Y, day first for %d/%m/%Y. When false, date fields only accept YYYY-MM-DD. Applies to PDF templates: an HTML or Word template's date fields only accept YYYY-MM-DD. Date fields that include a time take RFC 3339 date-times either way.
     #[serde(rename = "parse_dates_using_template_date_format")]
     pub parse_dates_using_template_date_format: bool,
     /// Allow anyone with a submission's ID to download its PDF.
@@ -148,7 +151,7 @@ pub struct Template {
         deserialize_with = "Option::deserialize"
     )]
     pub predefined_fields_sample_data: Option<std::collections::HashMap<String, serde_json::Value>>,
-    /// The HTML of an HTML template, as a Liquid template. Null for PDF templates.
+    /// The HTML of an HTML template, as a Liquid template. Null for PDF and Word templates.
     #[serde(rename = "html", deserialize_with = "Option::deserialize")]
     pub html: Option<String>,
     /// The SCSS of an HTML template.
@@ -160,7 +163,7 @@ pub struct Template {
     /// The HTML printed at the bottom of each page of an HTML template.
     #[serde(rename = "footer_html", deserialize_with = "Option::deserialize")]
     pub footer_html: Option<String>,
-    /// How an HTML template's PDFs are printed. Null for PDF templates. Setting it replaces the whole object: options left out use their defaults.
+    /// How an HTML template's PDFs are printed. Null for PDF and Word templates. Setting it replaces the whole object: options left out use their defaults.
     #[serde(
         rename = "html_engine_options",
         deserialize_with = "Option::deserialize"
@@ -184,6 +187,7 @@ impl Template {
         name: Option<String>,
         description: Option<String>,
         template_type: models::TemplateType,
+        output_format: models::OutputFormat,
         ready: bool,
         document: Option<models::TemplateDocument>,
         parent_folder_id: Option<String>,
@@ -236,6 +240,7 @@ impl Template {
             name,
             description,
             template_type,
+            output_format,
             ready,
             document,
             parent_folder_id,

@@ -4,6 +4,9 @@
 
 | Name | Value |
 |---- | -----|
+| Pdf | pdf |
+| Docx | docx |
+| Odt | odt |
 | Png | png |
 
 

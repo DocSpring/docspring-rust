@@ -1,7 +1,7 @@
 /*
  * DocSpring API
  *
- * Use DocSpring's API to programmatically fill out PDF forms, convert HTML to PDFs, merge PDFs, or request legally binding e-signatures.
+ * Use DocSpring's API to fill PDF forms, generate PDFs and Word documents from HTML or Word templates, merge PDFs, and request legally binding e-signatures.
  *
  * The version of the OpenAPI document: v2
  * Contact: DocSpring <support@docspring.com>
@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 /// GenerateSubmissionFilesRequest : The formats to make.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GenerateSubmissionFilesRequest {
-    /// The formats to add to the submission's files: `png`, an image of each page of the submission's PDF (up to 100 pages). A format the submission already has (or is making) is left as it is.
+    /// The formats to add to the submission's files: `pdf`, the PDF of a Word template's submission that didn't make one (converted from its Word document); `docx`, the Word document of a Word template's submission that didn't make one (made again from the submission's data and the template version it used); `odt`, the OpenDocument file of a Word template's submission that didn't make one (converted from its Word document); and `png`, an image of each page of the PDF (up to 100 pages), which makes the PDF first if the submission doesn't have one. A submission without a Word document makes it again for `pdf` and `odt`, without keeping it. A format the submission already has (or is making) is left as it is.
     #[serde(rename = "formats")]
     pub formats: Vec<models::GenerateFilesFormat>,
 }

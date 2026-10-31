@@ -1,7 +1,7 @@
 /*
  * DocSpring API
  *
- * Use DocSpring's API to programmatically fill out PDF forms, convert HTML to PDFs, merge PDFs, or request legally binding e-signatures.
+ * Use DocSpring's API to fill PDF forms, generate PDFs and Word documents from HTML or Word templates, merge PDFs, and request legally binding e-signatures.
  *
  * The version of the OpenAPI document: v2
  * Contact: DocSpring <support@docspring.com>
@@ -32,7 +32,7 @@ pub struct TemplateDiff {
     /// The names of the template's settings that changed, as they're named on the Template (`name`, `html`, `defaults`, `merge_audit_trail_pdf`, ...). Values aren't included. Settings that apply to every version, such as `webhook_url` and `encrypt_pdfs_password`, are the same on every version, so they're named only when there's no earlier version to compare with; a secret is named without its value.
     #[serde(rename = "changed_settings")]
     pub changed_settings: Vec<String>,
-    /// The template's PDF was replaced (or added, when there's no `from_version`).
+    /// The template's PDF was replaced, or its Word document replaced or edited (or added, when there's no `from_version`).
     #[serde(rename = "document_changed")]
     pub document_changed: bool,
 }

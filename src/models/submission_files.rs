@@ -1,7 +1,7 @@
 /*
  * DocSpring API
  *
- * Use DocSpring's API to programmatically fill out PDF forms, convert HTML to PDFs, merge PDFs, or request legally binding e-signatures.
+ * Use DocSpring's API to fill PDF forms, generate PDFs and Word documents from HTML or Word templates, merge PDFs, and request legally binding e-signatures.
  *
  * The version of the OpenAPI document: v2
  * Contact: DocSpring <support@docspring.com>
@@ -23,6 +23,12 @@ pub struct SubmissionFiles {
     /// The preview PDF from POST /submissions/{submission_id}/generate_preview, such as for a submission still waiting for its signature requests.
     #[serde(rename = "preview", skip_serializing_if = "Option::is_none")]
     pub preview: Option<models::GeneratedFile>,
+    /// The Word document of a Word template's submission, when the submission makes one (`output_formats`).
+    #[serde(rename = "docx", skip_serializing_if = "Option::is_none")]
+    pub docx: Option<models::GeneratedFile>,
+    /// The OpenDocument file (.odt, the format LibreOffice uses) of a Word template's submission, converted from its Word document, when the submission makes one (`output_formats`).
+    #[serde(rename = "odt", skip_serializing_if = "Option::is_none")]
+    pub odt: Option<models::GeneratedFile>,
     #[serde(rename = "png", skip_serializing_if = "Option::is_none")]
     pub png: Option<models::PageImages>,
 }
@@ -34,6 +40,8 @@ impl SubmissionFiles {
             pdf: None,
             audit_trail: None,
             preview: None,
+            docx: None,
+            odt: None,
             png: None,
         }
     }

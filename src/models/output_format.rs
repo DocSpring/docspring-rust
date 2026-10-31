@@ -1,7 +1,7 @@
 /*
  * DocSpring API
  *
- * Use DocSpring's API to programmatically fill out PDF forms, convert HTML to PDFs, merge PDFs, or request legally binding e-signatures.
+ * Use DocSpring's API to fill PDF forms, generate PDFs and Word documents from HTML or Word templates, merge PDFs, and request legally binding e-signatures.
  *
  * The version of the OpenAPI document: v2
  * Contact: DocSpring <support@docspring.com>
@@ -11,8 +11,8 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// OutputFormat : A file format DocSpring makes: `pdf`, or `png` (images of a PDF's pages).
-/// A file format DocSpring makes: `pdf`, or `png` (images of a PDF's pages).
+/// OutputFormat : A file format DocSpring makes: `pdf`, `docx` (a Word document), `odt` (an OpenDocument file), or `png` (images of a PDF's pages).
+/// A file format DocSpring makes: `pdf`, `docx` (a Word document), `odt` (an OpenDocument file), or `png` (images of a PDF's pages).
 ///
 /// A value added to the API after this release is `Unknown`, with the value as the API sent it. A later release can
 /// add variants, so a `match` needs a wildcard arm.
@@ -20,6 +20,8 @@ use serde::{Deserialize, Serialize};
 #[non_exhaustive]
 pub enum OutputFormat {
     Pdf,
+    Docx,
+    Odt,
     Png,
 
     /// A value this release doesn't know, as the API sent it
@@ -28,12 +30,14 @@ pub enum OutputFormat {
 
 impl OutputFormat {
     /// The values this release knows
-    pub const VALUES: &'static [OutputFormat] = &[Self::Pdf, Self::Png];
+    pub const VALUES: &'static [OutputFormat] = &[Self::Pdf, Self::Docx, Self::Odt, Self::Png];
 
     /// The value as the API sends it
     pub fn as_str(&self) -> &str {
         match self {
             Self::Pdf => "pdf",
+            Self::Docx => "docx",
+            Self::Odt => "odt",
             Self::Png => "png",
             Self::Unknown(value) => value,
         }
@@ -49,6 +53,8 @@ impl From<&str> for OutputFormat {
     fn from(value: &str) -> Self {
         match value {
             "pdf" => Self::Pdf,
+            "docx" => Self::Docx,
+            "odt" => Self::Odt,
             "png" => Self::Png,
             _ => Self::Unknown(value.to_owned()),
         }

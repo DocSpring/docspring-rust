@@ -1,7 +1,7 @@
 /*
  * DocSpring API
  *
- * Use DocSpring's API to programmatically fill out PDF forms, convert HTML to PDFs, merge PDFs, or request legally binding e-signatures.
+ * Use DocSpring's API to fill PDF forms, generate PDFs and Word documents from HTML or Word templates, merge PDFs, and request legally binding e-signatures.
  *
  * The version of the OpenAPI document: v2
  * Contact: DocSpring <support@docspring.com>
@@ -96,7 +96,7 @@ pub trait Api: Send + Sync {
 
     /// POST /templates
     ///
-    /// Creates an HTML template, or a PDF template from a PDF you uploaded with the presigned upload (GET /uploads/presign): pass its `fields.key` as `cache_id`. To send the PDF with the request instead, use POST /templates/upload.  A PDF template is ready to generate PDFs once DocSpring has processed its PDF (`ready` is true). On sync.api hosts the request waits for that unless you pass `wait=false`.
+    /// Creates an HTML template, or a PDF or Word template from a file you uploaded with the presigned upload (GET /uploads/presign): pass its `fields.key` as `cache_id`. You can send a link to the file (`document_url`) or the file in base64 (`document_base64`) instead, or send the file with the request with POST /templates/upload. A Word template is made from a Word document (.docx) or an OpenDocument text file (.odt), which DocSpring converts to a Word document. It needs its `output_format`: what each submission makes, a Word document (`docx`), an OpenDocument file (`odt`) or a PDF.  A PDF template is ready to generate PDFs once DocSpring has processed its PDF, a template created from a `document_url` once its document has been downloaded, and one created from an .odt once it has been converted (`ready` is true). On sync.api hosts the request waits for that unless you pass `wait=false`.
     async fn create_template(
         &self,
         params: CreateTemplateParams,
@@ -104,7 +104,7 @@ pub trait Api: Send + Sync {
 
     /// POST /templates/{template_id}/previews
     ///
-    /// Makes PNG images of a template's pages filled in with the data you send (not a PDF), so you can check how an HTML or PDF template prints with your data before you publish a version or send live data. It renders the template's draft, or the published `version` you ask for. A preview makes no submission and uses no credits, and its pages are watermarked like a test submission's PDF. It's `pending` while it renders: get it with GET /templates/{template_id}/previews/{preview_id} until it's `processed`, with an image of each page, or `error`.
+    /// Makes PNG images of a template's pages filled in with the data you send (not a PDF), so you can check how an HTML, PDF or Word template prints with your data before you publish a version or send live data. A Word template's pages are its PDF's, whatever its `output_format`. It renders the template's draft, or the published `version` you ask for. A preview makes no submission and uses no credits, and its pages are watermarked like a test submission's PDF. It's `pending` while it renders: get it with GET /templates/{template_id}/previews/{preview_id} until it's `processed`, with an image of each page, or `error`.
     async fn create_template_preview(
         &self,
         params: CreateTemplatePreviewParams,
@@ -168,7 +168,7 @@ pub trait Api: Send + Sync {
 
     /// POST /submissions/{submission_id}/generate_files
     ///
-    /// Adds formats to a processed submission's files, in the background: `png`, a PNG image of each page of the PDF (up to 100 pages). To make them with the submission, add them to `output_formats` when you create it.  Each new file is listed in `files` while it's made: on sync.api hosts the request waits for them (unless you pass `wait=false`), otherwise poll GET /submissions/{submission_id} until none of their `state` is `pending`. A file that couldn't be made has the state `error` and an `error_message`, and the submission stays processed. Asking for a format the submission already has (or is making) changes nothing.
+    /// Adds formats to a processed submission's files, in the background, without using credits again: `pdf`, the PDF of a Word template's submission that made only its Word document (converted from that document), `docx`, the Word document of a Word template's submission that made only its PDF (made again from its data and the template version it used), `odt`, a Word template's submission's OpenDocument file (converted from its Word document, or from one made again when it didn't keep one), and `png`, a PNG image of each page of the PDF (up to 100 pages), which makes the PDF first when the submission doesn't have one. To make them with the submission, add them to `output_formats` when you create it.  Each new file is listed in `files` while it's made: on sync.api hosts the request waits for them (unless you pass `wait=false`), otherwise poll GET /submissions/{submission_id} until none of their `state` is `pending`. A file that couldn't be made has the state `error` and an `error_message`, and the submission stays processed. Asking for a format the submission already has (or is making) changes nothing.
     async fn generate_submission_files(
         &self,
         params: GenerateSubmissionFilesParams,
@@ -436,7 +436,7 @@ pub trait Api: Send + Sync {
 
     /// PUT /templates/{template_id}/document
     ///
-    /// Replaces a PDF template's PDF with one you uploaded with the presigned upload (GET /uploads/presign) (`cache_id`), a link to download it from (`document_url`), or the file in base64 (`document_base64`). The fields stay where they are, unless `reimport_fields` replaces them with the new PDF's fillable fields. To send the PDF as `multipart/form-data` instead, use PUT /templates/{template_id}/document/upload.
+    /// Replaces a PDF template's PDF, or a Word template's Word document (from a .docx or an .odt), with one you uploaded with the presigned upload (GET /uploads/presign) (`cache_id`), a link to download it from (`document_url`), or the file in base64 (`document_base64`). A PDF template's fields stay where they are, unless `reimport_fields` replaces them with the new PDF's fillable fields, and a Word template gets a field for each new tag. To send the file as `multipart/form-data` instead, use PUT /templates/{template_id}/document/upload.
     async fn update_template_document(
         &self,
         params: UpdateTemplateDocumentParams,
@@ -460,7 +460,7 @@ pub trait Api: Send + Sync {
 
     /// POST /templates/upload
     ///
-    /// Creates a PDF template from a PDF sent with the request (`multipart/form-data`). For large files, upload the PDF with the presigned upload (GET /uploads/presign) and create the template with POST /templates.
+    /// Creates a PDF template from a PDF, or a Word template from a Word document (.docx) or an OpenDocument text file (.odt), sent with the request (`multipart/form-data`). A Word template needs its `output_format`. For large files, upload the file with the presigned upload (GET /uploads/presign) and create the template with POST /templates.
     async fn upload_template(
         &self,
         params: UploadTemplateParams,
@@ -468,7 +468,7 @@ pub trait Api: Send + Sync {
 
     /// PUT /templates/{template_id}/document/upload
     ///
-    /// Replaces a PDF template's PDF with one sent with the request (`multipart/form-data`). The fields stay where they are, unless `reimport_fields` replaces them with the new PDF's fillable fields.
+    /// Replaces a PDF template's PDF, or a Word template's Word document, with one sent with the request (`multipart/form-data`). A PDF template's fields stay where they are, unless `reimport_fields` replaces them with the new PDF's fillable fields, and a Word template gets a field for each new tag.
     async fn upload_template_document(
         &self,
         params: UploadTemplateDocumentParams,
@@ -586,7 +586,7 @@ pub struct CreateSubmissionParams {
 pub struct CreateSubmissionBatchParams {
     /// The submissions to create, and the settings they share.
     pub body: models::CreateSubmissionBatchRequest,
-    /// Wait until every PDF in the batch has been generated before responding. Default true on sync.api hosts.
+    /// Wait until every file in the batch has been generated before responding. Default true on sync.api hosts.
     pub wait: Option<bool>,
     /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of creating another batch. Send a new key with each new batch, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` means the first request is still being processed: send the request again in a few seconds.
     pub idempotency_key: Option<String>,
@@ -598,7 +598,7 @@ pub struct CreateSubmissionBatchParams {
 pub struct CreateTemplateParams {
     /// The template to create.
     pub body: models::CreateTemplateRequest,
-    /// Wait until the PDF has been processed, and a `document_url` downloaded, before responding. Default true on sync.api hosts.
+    /// Wait until the PDF has been processed, a `document_url`'s PDF or Word document downloaded, and an OpenDocument file converted, before responding. Default true on sync.api hosts.
     pub wait: Option<bool>,
 }
 
@@ -1034,9 +1034,9 @@ pub struct UpdateTemplateParams {
 pub struct UpdateTemplateDocumentParams {
     /// The template's ID.
     pub template_id: String,
-    /// The new PDF, as one of `cache_id`, `document_url` and `document_base64`.
+    /// The new PDF, or a Word template's new Word document, as one of `cache_id`, `document_url` and `document_base64`.
     pub body: models::UpdateTemplateDocumentRequest,
-    /// Wait until the PDF has been processed, and a `document_url` downloaded, before responding. Default true on sync.api hosts.
+    /// Wait until the PDF has been processed, a `document_url`'s PDF or Word document downloaded, and an OpenDocument file converted, before responding. Default true on sync.api hosts.
     pub wait: Option<bool>,
 }
 
@@ -1064,9 +1064,9 @@ pub struct UpdateWebhookParams {
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
 pub struct UploadTemplateParams {
-    /// The PDF.
+    /// A PDF (for a PDF template) or a Word document (.docx or .odt, for a Word template). DocSpring converts an OpenDocument text file (.odt) to a Word document after responding: the template's `document.state` is `converting` until then (sync.api hosts wait for it).
     pub document: std::path::PathBuf,
-    /// Wait until the PDF has been processed, and a `document_url` downloaded, before responding. Default true on sync.api hosts.
+    /// Wait until the PDF has been processed, a `document_url`'s PDF or Word document downloaded, and an OpenDocument file converted, before responding. Default true on sync.api hosts.
     pub wait: Option<bool>,
     /// The template's name.
     pub name: Option<String>,
@@ -1084,6 +1084,8 @@ pub struct UploadTemplateParams {
     pub field_naming: Option<models::FieldSetupNaming>,
     /// With `detect_fields`, whether AI reads the whole form once the fields are named and sets up conditional logic and required fields (`ai`) or not (`none`). Default: your account's template settings.
     pub field_logic: Option<models::FieldSetupLogic>,
+    /// What each submission of a Word template makes unless its request sets `output_formats`: `docx` (a Word document), `odt` (an OpenDocument file, converted from the Word document) or `pdf`. Required when `document` is a Word document.
+    pub output_format: Option<models::OutputFormat>,
 }
 
 /// struct for passing parameters to the method [`Api::upload_template_document`]
@@ -1092,11 +1094,11 @@ pub struct UploadTemplateParams {
 pub struct UploadTemplateDocumentParams {
     /// The template's ID.
     pub template_id: String,
-    /// The new PDF.
+    /// The new PDF, or the new Word document (.docx or .odt) of a Word template.
     pub document: std::path::PathBuf,
-    /// Wait until the PDF has been processed, and a `document_url` downloaded, before responding. Default true on sync.api hosts.
+    /// Wait until the PDF has been processed, a `document_url`'s PDF or Word document downloaded, and an OpenDocument file converted, before responding. Default true on sync.api hosts.
     pub wait: Option<bool>,
-    /// Replace all of the template's fields with the fillable fields in the new PDF, once DocSpring has processed it (`document.field_reimport_state`). As on a first upload, the default typeface, font size, bold and color are taken from the PDF's fields; the template's other settings are kept. If the PDF has no fillable fields, the template keeps its fields. A locked template can't re-import its fields.
+    /// Replace all of the template's fields with the fillable fields in the new PDF, once DocSpring has processed it (`document.field_reimport_state`). As on a first upload, the default typeface, font size, bold and color are taken from the PDF's fields; the template's other settings are kept. If the PDF has no fillable fields, the template keeps its fields. A locked template can't re-import its fields. Only for PDF templates: a Word template adds a field for each new tag.
     pub reimport_fields: Option<bool>,
 }
 
@@ -1980,7 +1982,7 @@ impl Api for Client {
         }
     }
 
-    /// Creates an HTML template, or a PDF template from a PDF you uploaded with the presigned upload (GET /uploads/presign): pass its `fields.key` as `cache_id`. To send the PDF with the request instead, use POST /templates/upload.  A PDF template is ready to generate PDFs once DocSpring has processed its PDF (`ready` is true). On sync.api hosts the request waits for that unless you pass `wait=false`.
+    /// Creates an HTML template, or a PDF or Word template from a file you uploaded with the presigned upload (GET /uploads/presign): pass its `fields.key` as `cache_id`. You can send a link to the file (`document_url`) or the file in base64 (`document_base64`) instead, or send the file with the request with POST /templates/upload. A Word template is made from a Word document (.docx) or an OpenDocument text file (.odt), which DocSpring converts to a Word document. It needs its `output_format`: what each submission makes, a Word document (`docx`), an OpenDocument file (`odt`) or a PDF.  A PDF template is ready to generate PDFs once DocSpring has processed its PDF, a template created from a `document_url` once its document has been downloaded, and one created from an .odt once it has been converted (`ready` is true). On sync.api hosts the request waits for that unless you pass `wait=false`.
     async fn create_template(
         &self,
         params: CreateTemplateParams,
@@ -2070,7 +2072,7 @@ impl Api for Client {
         }
     }
 
-    /// Makes PNG images of a template's pages filled in with the data you send (not a PDF), so you can check how an HTML or PDF template prints with your data before you publish a version or send live data. It renders the template's draft, or the published `version` you ask for. A preview makes no submission and uses no credits, and its pages are watermarked like a test submission's PDF. It's `pending` while it renders: get it with GET /templates/{template_id}/previews/{preview_id} until it's `processed`, with an image of each page, or `error`.
+    /// Makes PNG images of a template's pages filled in with the data you send (not a PDF), so you can check how an HTML, PDF or Word template prints with your data before you publish a version or send live data. A Word template's pages are its PDF's, whatever its `output_format`. It renders the template's draft, or the published `version` you ask for. A preview makes no submission and uses no credits, and its pages are watermarked like a test submission's PDF. It's `pending` while it renders: get it with GET /templates/{template_id}/previews/{preview_id} until it's `processed`, with an image of each page, or `error`.
     async fn create_template_preview(
         &self,
         params: CreateTemplatePreviewParams,
@@ -2769,7 +2771,7 @@ impl Api for Client {
         }
     }
 
-    /// Adds formats to a processed submission's files, in the background: `png`, a PNG image of each page of the PDF (up to 100 pages). To make them with the submission, add them to `output_formats` when you create it.  Each new file is listed in `files` while it's made: on sync.api hosts the request waits for them (unless you pass `wait=false`), otherwise poll GET /submissions/{submission_id} until none of their `state` is `pending`. A file that couldn't be made has the state `error` and an `error_message`, and the submission stays processed. Asking for a format the submission already has (or is making) changes nothing.
+    /// Adds formats to a processed submission's files, in the background, without using credits again: `pdf`, the PDF of a Word template's submission that made only its Word document (converted from that document), `docx`, the Word document of a Word template's submission that made only its PDF (made again from its data and the template version it used), `odt`, a Word template's submission's OpenDocument file (converted from its Word document, or from one made again when it didn't keep one), and `png`, a PNG image of each page of the PDF (up to 100 pages), which makes the PDF first when the submission doesn't have one. To make them with the submission, add them to `output_formats` when you create it.  Each new file is listed in `files` while it's made: on sync.api hosts the request waits for them (unless you pass `wait=false`), otherwise poll GET /submissions/{submission_id} until none of their `state` is `pending`. A file that couldn't be made has the state `error` and an `error_message`, and the submission stays processed. Asking for a format the submission already has (or is making) changes nothing.
     async fn generate_submission_files(
         &self,
         params: GenerateSubmissionFilesParams,
@@ -5887,7 +5889,7 @@ impl Api for Client {
         }
     }
 
-    /// Replaces a PDF template's PDF with one you uploaded with the presigned upload (GET /uploads/presign) (`cache_id`), a link to download it from (`document_url`), or the file in base64 (`document_base64`). The fields stay where they are, unless `reimport_fields` replaces them with the new PDF's fillable fields. To send the PDF as `multipart/form-data` instead, use PUT /templates/{template_id}/document/upload.
+    /// Replaces a PDF template's PDF, or a Word template's Word document (from a .docx or an .odt), with one you uploaded with the presigned upload (GET /uploads/presign) (`cache_id`), a link to download it from (`document_url`), or the file in base64 (`document_base64`). A PDF template's fields stay where they are, unless `reimport_fields` replaces them with the new PDF's fillable fields, and a Word template gets a field for each new tag. To send the file as `multipart/form-data` instead, use PUT /templates/{template_id}/document/upload.
     async fn update_template_document(
         &self,
         params: UpdateTemplateDocumentParams,
@@ -6167,7 +6169,7 @@ impl Api for Client {
         }
     }
 
-    /// Creates a PDF template from a PDF sent with the request (`multipart/form-data`). For large files, upload the PDF with the presigned upload (GET /uploads/presign) and create the template with POST /templates.
+    /// Creates a PDF template from a PDF, or a Word template from a Word document (.docx) or an OpenDocument text file (.odt), sent with the request (`multipart/form-data`). A Word template needs its `output_format`. For large files, upload the file with the presigned upload (GET /uploads/presign) and create the template with POST /templates.
     async fn upload_template(
         &self,
         params: UploadTemplateParams,
@@ -6183,6 +6185,7 @@ impl Api for Client {
             field_source,
             field_naming,
             field_logic,
+            output_format,
         } = params;
 
         let local_var_configuration = &self.configuration;
@@ -6280,6 +6283,14 @@ impl Api for Client {
             );
             local_var_form = local_var_form.text("field_logic", local_var_text);
         }
+        if let Some(local_var_param_value) = output_format {
+            let local_var_text = local_var_param_value.to_string();
+            local_var_form_fields.insert(
+                "output_format".to_owned(),
+                serde_json::Value::String(local_var_text.clone()),
+            );
+            local_var_form = local_var_form.text("output_format", local_var_text);
+        }
         local_var_req_builder = local_var_req_builder.multipart(local_var_form);
 
         let local_var_req = local_var_req_builder.build()?;
@@ -6341,7 +6352,7 @@ impl Api for Client {
         }
     }
 
-    /// Replaces a PDF template's PDF with one sent with the request (`multipart/form-data`). The fields stay where they are, unless `reimport_fields` replaces them with the new PDF's fillable fields.
+    /// Replaces a PDF template's PDF, or a Word template's Word document, with one sent with the request (`multipart/form-data`). A PDF template's fields stay where they are, unless `reimport_fields` replaces them with the new PDF's fillable fields, and a Word template gets a field for each new tag.
     async fn upload_template_document(
         &self,
         params: UploadTemplateDocumentParams,

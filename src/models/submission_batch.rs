@@ -1,7 +1,7 @@
 /*
  * DocSpring API
  *
- * Use DocSpring's API to programmatically fill out PDF forms, convert HTML to PDFs, merge PDFs, or request legally binding e-signatures.
+ * Use DocSpring's API to fill PDF forms, generate PDFs and Word documents from HTML or Word templates, merge PDFs, and request legally binding e-signatures.
  *
  * The version of the OpenAPI document: v2
  * Contact: DocSpring <support@docspring.com>
@@ -11,13 +11,13 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// SubmissionBatch : Submissions created together in one request. Their PDFs are only generated when every submission in the batch is valid.
+/// SubmissionBatch : Submissions created together in one request. Their files are only generated when every submission in the batch is valid.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SubmissionBatch {
     /// The batch's ID.
     #[serde(rename = "id")]
     pub id: String,
-    /// `pending` while the PDFs are being generated, then `processed`. `error` as soon as a submission fails, while the others can still be pending: the batch has finished once `processed_at` is set.
+    /// `pending` while the files are being generated, then `processed`. `error` as soon as a submission fails, while the others can still be pending: the batch has finished once `processed_at` is set.
     #[serde(rename = "state")]
     pub state: models::SubmissionBatchState,
     /// Your own data about the batch, such as an ID from your app.
@@ -26,10 +26,10 @@ pub struct SubmissionBatch {
     /// The number of submissions in the request.
     #[serde(rename = "total_count")]
     pub total_count: i32,
-    /// The submissions whose PDFs haven't been generated yet.
+    /// The submissions whose files haven't been generated yet.
     #[serde(rename = "pending_count")]
     pub pending_count: i32,
-    /// The submissions that were invalid or whose PDFs couldn't be generated.
+    /// The submissions that were invalid or whose files couldn't be generated.
     #[serde(rename = "error_count")]
     pub error_count: i32,
     /// The percentage of the batch's submissions that have finished, from 0 to 100.
@@ -50,7 +50,7 @@ pub struct SubmissionBatch {
 }
 
 impl SubmissionBatch {
-    /// Submissions created together in one request. Their PDFs are only generated when every submission in the batch is valid.
+    /// Submissions created together in one request. Their files are only generated when every submission in the batch is valid.
     pub fn new(
         id: String,
         state: models::SubmissionBatchState,

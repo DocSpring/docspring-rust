@@ -11,6 +11,8 @@
 | UnknownError | unknown_error |
 | Downloading | downloading |
 | DownloadFailed | download_failed |
+| Converting | converting |
+| ConversionFailed | conversion_failed |
 
 
 [[Back to Model list]](../README.md#methods) [[Back to API list]](../README.md#methods) [[Back to README]](../README.md)

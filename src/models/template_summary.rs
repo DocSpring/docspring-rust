@@ -1,7 +1,7 @@
 /*
  * DocSpring API
  *
- * Use DocSpring's API to programmatically fill out PDF forms, convert HTML to PDFs, merge PDFs, or request legally binding e-signatures.
+ * Use DocSpring's API to fill PDF forms, generate PDFs and Word documents from HTML or Word templates, merge PDFs, and request legally binding e-signatures.
  *
  * The version of the OpenAPI document: v2
  * Contact: DocSpring <support@docspring.com>
@@ -23,13 +23,16 @@ pub struct TemplateSummary {
     /// Shown under the template's name at the top of its hosted forms, and used as their meta description. Not shown on embedded forms or signature requests.
     #[serde(rename = "description", deserialize_with = "Option::deserialize")]
     pub description: Option<String>,
-    /// `pdf`: fields placed on an uploaded PDF. `html`: a PDF rendered from HTML and SCSS. It can't be changed after the template is created.
+    /// `pdf`: fields placed on an uploaded PDF. `html`: a PDF rendered from HTML and SCSS. `docx`: a Word document with tags where the data goes, which makes Word documents or PDFs. It can't be changed after the template is created.
     #[serde(rename = "template_type")]
     pub template_type: models::TemplateType,
-    /// Whether the template can generate PDFs. HTML templates are always ready. A PDF template is ready once DocSpring has stored its PDF, made an image of each page and finished looking for fields on each page, which can be after `document.state` becomes `processed`. A PDF template with no PDF (`document` is null) isn't ready.
+    /// What each submission makes unless its request sets `output_formats`: `docx` (a Word document), `odt` (an OpenDocument file, converted from the Word document) or `pdf`. A Word template's is chosen when it's created; PDF and HTML templates always make PDFs. A Word template that encrypts its PDFs makes PDFs, because Word documents and OpenDocument files can't be password-protected.
+    #[serde(rename = "output_format")]
+    pub output_format: models::OutputFormat,
+    /// Whether the template can make documents. HTML templates are always ready. A PDF template is ready once DocSpring has stored its PDF, made an image of each page and finished looking for fields on each page, which can be after `document.state` becomes `processed`. A PDF template with no PDF (`document` is null) isn't ready. A Word template is ready once it has a Word document (a `document_url`'s has been downloaded).
     #[serde(rename = "ready")]
     pub ready: bool,
-    /// The PDF of a PDF template: its file name, page count and processing state. Null for HTML templates, and for a PDF template that has no PDF yet.
+    /// The PDF of a PDF template, or the Word document of a Word template: its file name, page count and processing state. Null for HTML templates, and for a PDF template that has no PDF yet. A template created from a `document_url`, or a Word template created from an OpenDocument file (.odt), has one, with no file, while it's downloaded or converted.
     #[serde(rename = "document", deserialize_with = "Option::deserialize")]
     pub document: Option<models::TemplateDocumentSummary>,
     /// The ID of the folder the template is in. Null for a template at the root. Setting it moves the template and all of its published versions.
@@ -68,6 +71,7 @@ impl TemplateSummary {
         name: Option<String>,
         description: Option<String>,
         template_type: models::TemplateType,
+        output_format: models::OutputFormat,
         ready: bool,
         document: Option<models::TemplateDocumentSummary>,
         parent_folder_id: Option<String>,
@@ -84,6 +88,7 @@ impl TemplateSummary {
             name,
             description,
             template_type,
+            output_format,
             ready,
             document,
             parent_folder_id,

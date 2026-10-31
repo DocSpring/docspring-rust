@@ -1,7 +1,7 @@
 /*
  * DocSpring API
  *
- * Use DocSpring's API to programmatically fill out PDF forms, convert HTML to PDFs, merge PDFs, or request legally binding e-signatures.
+ * Use DocSpring's API to fill PDF forms, generate PDFs and Word documents from HTML or Word templates, merge PDFs, and request legally binding e-signatures.
  *
  * The version of the OpenAPI document: v2
  * Contact: DocSpring <support@docspring.com>
@@ -25,9 +25,12 @@ pub struct CreateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub description: Option<Option<String>>,
-    /// `pdf`: fields placed on an uploaded PDF. `html`: a PDF rendered from HTML and SCSS. It can't be changed after the template is created.
+    /// `pdf`: fields placed on an uploaded PDF. `html`: a PDF rendered from HTML and SCSS. `docx`: a Word document with tags where the data goes, which makes Word documents or PDFs. It can't be changed after the template is created.
     #[serde(rename = "template_type")]
     pub template_type: models::TemplateType,
+    /// What each submission makes unless its request sets `output_formats`: `docx` (a Word document), `odt` (an OpenDocument file, converted from the Word document) or `pdf`. A Word template's is chosen when it's created; PDF and HTML templates always make PDFs. A Word template that encrypts its PDFs makes PDFs, because Word documents and OpenDocument files can't be password-protected.
+    #[serde(rename = "output_format", skip_serializing_if = "Option::is_none")]
+    pub output_format: Option<models::OutputFormat>,
     /// The ID of the folder the template is in. Null for a template at the root. Setting it moves the template and all of its published versions.
     #[serde(
         rename = "parent_folder_id",
@@ -63,7 +66,7 @@ pub struct CreateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub allow_skipping_optional_fields: Option<bool>,
-    /// The hosted form that /templates/{template_id}/form shows when its URL has no `mode` parameter: `web` (the web form), `visual` (the visual form, where fields are filled in on the PDF) or `dual` (both, in tabs). HTML templates have no visual form, so `web` is the only value they accept.
+    /// The hosted form that /templates/{template_id}/form shows when its URL has no `mode` parameter: `web` (the web form), `visual` (the visual form, where fields are filled in on the PDF) or `dual` (both, in tabs). Only PDF templates have a visual form, so other templates accept only `web`.
     #[serde(rename = "default_form_mode", skip_serializing_if = "Option::is_none")]
     pub default_form_mode: Option<models::TemplateFormMode>,
     /// Generate PDFs whose text and check fields stay fillable ("Generate Editable PDFs"). A submission's `editable` overrides it.
@@ -93,7 +96,7 @@ pub struct CreateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub embed_edit_allow_document_replacement: Option<bool>,
-    /// Encrypt generated PDFs with `encrypt_pdfs_password`.
+    /// Encrypt generated PDFs with `encrypt_pdfs_password`. A Word template can only encrypt its PDFs when its `output_format` is `pdf`, because Word documents and OpenDocument files can't be password-protected.
     #[serde(rename = "encrypt_pdfs", skip_serializing_if = "Option::is_none")]
     pub encrypt_pdfs: Option<bool>,
     /// The password that opens encrypted PDFs. It's never returned; `has_encrypt_pdfs_password` says if it's set.
@@ -122,7 +125,7 @@ pub struct CreateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub merge_audit_trail_pdf: Option<bool>,
-    /// Date fields also accept NN/NN/YYYY dates (with slashes, dashes or dots), read in the order of the template's default date format: month first for %m/%d/%Y, day first for %d/%m/%Y. When false, date fields only accept YYYY-MM-DD. Applies to PDF templates: an HTML template's date fields only accept YYYY-MM-DD. Date fields that include a time take RFC 3339 date-times either way.
+    /// Date fields also accept NN/NN/YYYY dates (with slashes, dashes or dots), read in the order of the template's default date format: month first for %m/%d/%Y, day first for %d/%m/%Y. When false, date fields only accept YYYY-MM-DD. Applies to PDF templates: an HTML or Word template's date fields only accept YYYY-MM-DD. Date fields that include a time take RFC 3339 date-times either way.
     #[serde(
         rename = "parse_dates_using_template_date_format",
         skip_serializing_if = "Option::is_none"
@@ -168,7 +171,7 @@ pub struct CreateTemplateRequest {
     )]
     pub predefined_fields_sample_data:
         Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
-    /// The HTML of an HTML template, as a Liquid template. Null for PDF templates.
+    /// The HTML of an HTML template, as a Liquid template. Null for PDF and Word templates.
     #[serde(
         rename = "html",
         default,
@@ -211,16 +214,16 @@ pub struct CreateTemplateRequest {
     /// Whether an HTML template HTML-escapes the values it prints. When true, `{{ value }}` prints a value as text, so a `<` or `&` in it is printed as that character, and `{{ value | raw }}` prints a value as HTML. New HTML templates default to true. Templates created before October 2026, or with API v1, default to false, which prints every value as HTML. Null for PDF templates.
     #[serde(rename = "html_escape_data", skip_serializing_if = "Option::is_none")]
     pub html_escape_data: Option<bool>,
-    /// A PDF template's document: the `fields.key` of a file you uploaded with the presigned upload (GET /uploads/presign). A PDF template needs one of `cache_id`, `document_url` and `document_base64`. To upload the PDF with the request, use POST /templates/upload.
+    /// The template's document, a PDF or a Word document (.docx or .odt): the `fields.key` of a file you uploaded with the presigned upload (GET /uploads/presign). PDF and Word templates need one of `cache_id`, `document_url` and `document_base64`. To upload the file with the request, use POST /templates/upload.
     #[serde(rename = "cache_id", skip_serializing_if = "Option::is_none")]
     pub cache_id: Option<String>,
-    /// An https:// link to the template's PDF (up to 100 MB), instead of `cache_id`. DocSpring downloads it after responding, following redirects to other https:// links: the template's `document.state` is `downloading` until then (sync.api hosts wait for it). If it can't be downloaded, the state is `download_failed` and `document.error_message` says why.
+    /// An https:// link to the template's document, instead of `cache_id`: a PDF template's PDF (up to 100 MB) or a Word template's Word document (.docx or .odt, up to 50 MB). DocSpring downloads it after responding, following redirects to other https:// links: the template's `document.state` is `downloading` until then, and `converting` while an .odt is converted (sync.api hosts wait for both). If it can't be downloaded, the state is `download_failed` and `document.error_message` says why.
     #[serde(rename = "document_url", skip_serializing_if = "Option::is_none")]
     pub document_url: Option<String>,
-    /// The template's PDF, encoded as base64 (a `data:` URI works too), instead of `cache_id`. Up to 7 MB before it's encoded: send a larger file with `cache_id` or `document_url`.
+    /// The template's document (a PDF, or a Word template's Word document), encoded as base64 (a `data:` URI works too), instead of `cache_id`. Up to 7 MB before it's encoded: send a larger file with `cache_id` or `document_url`.
     #[serde(rename = "document_base64", skip_serializing_if = "Option::is_none")]
     pub document_base64: Option<String>,
-    /// The PDF's file name, for a `cache_id` (presigned uploads don't send one) or `document_base64`. A `document_url`'s is the last part of its path unless you set it.
+    /// The file's name, for a `cache_id` (presigned uploads don't send one) or `document_base64`. A `document_url`'s is the last part of its path unless you set it.
     #[serde(rename = "filename", skip_serializing_if = "Option::is_none")]
     pub filename: Option<String>,
     /// Set up the PDF's fields as DocSpring's "Automatically detect fields" upload option does: import or detect the fields, name them with AI, and set up conditional logic. `field_source`, `field_naming` and `field_logic` choose how. Default false. `document.page_processing_statuses` and `document.field_logic_status` show how it's going, and `document.state` becomes `processed` once every page's fields are set up.
@@ -244,6 +247,7 @@ impl CreateTemplateRequest {
             name: None,
             description: None,
             template_type,
+            output_format: None,
             parent_folder_id: None,
             locked: None,
             add_signature_request_submission_id_footers: None,

@@ -1,7 +1,7 @@
 /*
  * DocSpring API
  *
- * Use DocSpring's API to programmatically fill out PDF forms, convert HTML to PDFs, merge PDFs, or request legally binding e-signatures.
+ * Use DocSpring's API to fill PDF forms, generate PDFs and Word documents from HTML or Word templates, merge PDFs, and request legally binding e-signatures.
  *
  * The version of the OpenAPI document: v2
  * Contact: DocSpring <support@docspring.com>
@@ -11,28 +11,28 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// UpdateTemplateDocumentRequest : The new PDF, as one of `cache_id`, `document_url` and `document_base64`.
+/// UpdateTemplateDocumentRequest : The new PDF, or a Word template's new Word document, as one of `cache_id`, `document_url` and `document_base64`.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct UpdateTemplateDocumentRequest {
-    /// The `fields.key` of the new PDF, uploaded with the presigned upload (GET /uploads/presign).
+    /// The `fields.key` of the new PDF or Word document (.docx or .odt), uploaded with the presigned upload (GET /uploads/presign).
     #[serde(rename = "cache_id", skip_serializing_if = "Option::is_none")]
     pub cache_id: Option<String>,
-    /// An https:// link to the template's PDF (up to 100 MB), instead of `cache_id`. DocSpring downloads it after responding, following redirects to other https:// links: the template's `document.state` is `downloading` until then (sync.api hosts wait for it). If it can't be downloaded, the state is `download_failed` and `document.error_message` says why.
+    /// An https:// link to the template's document, instead of `cache_id`: a PDF template's PDF (up to 100 MB) or a Word template's Word document (.docx or .odt, up to 50 MB). DocSpring downloads it after responding, following redirects to other https:// links: the template's `document.state` is `downloading` until then, and `converting` while an .odt is converted (sync.api hosts wait for both). If it can't be downloaded, the state is `download_failed` and `document.error_message` says why.
     #[serde(rename = "document_url", skip_serializing_if = "Option::is_none")]
     pub document_url: Option<String>,
-    /// The template's PDF, encoded as base64 (a `data:` URI works too), instead of `cache_id`. Up to 7 MB before it's encoded: send a larger file with `cache_id` or `document_url`.
+    /// The template's document (a PDF, or a Word template's Word document), encoded as base64 (a `data:` URI works too), instead of `cache_id`. Up to 7 MB before it's encoded: send a larger file with `cache_id` or `document_url`.
     #[serde(rename = "document_base64", skip_serializing_if = "Option::is_none")]
     pub document_base64: Option<String>,
-    /// The PDF's file name, for a `cache_id` (presigned uploads don't send one) or `document_base64`. A `document_url`'s is the last part of its path unless you set it.
+    /// The file's name, for a `cache_id` (presigned uploads don't send one) or `document_base64`. A `document_url`'s is the last part of its path unless you set it.
     #[serde(rename = "filename", skip_serializing_if = "Option::is_none")]
     pub filename: Option<String>,
-    /// Replace all of the template's fields with the fillable fields in the new PDF, once DocSpring has processed it (`document.field_reimport_state`). As on a first upload, the default typeface, font size, bold and color are taken from the PDF's fields; the template's other settings are kept. If the PDF has no fillable fields, the template keeps its fields. A locked template can't re-import its fields.
+    /// Replace all of the template's fields with the fillable fields in the new PDF, once DocSpring has processed it (`document.field_reimport_state`). As on a first upload, the default typeface, font size, bold and color are taken from the PDF's fields; the template's other settings are kept. If the PDF has no fillable fields, the template keeps its fields. A locked template can't re-import its fields. Only for PDF templates: a Word template adds a field for each new tag.
     #[serde(rename = "reimport_fields", skip_serializing_if = "Option::is_none")]
     pub reimport_fields: Option<bool>,
 }
 
 impl UpdateTemplateDocumentRequest {
-    /// The new PDF, as one of `cache_id`, `document_url` and `document_base64`.
+    /// The new PDF, or a Word template's new Word document, as one of `cache_id`, `document_url` and `document_base64`.
     pub fn new() -> UpdateTemplateDocumentRequest {
         UpdateTemplateDocumentRequest {
             cache_id: None,

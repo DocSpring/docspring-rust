@@ -1,7 +1,7 @@
 /*
  * DocSpring API
  *
- * Use DocSpring's API to programmatically fill out PDF forms, convert HTML to PDFs, merge PDFs, or request legally binding e-signatures.
+ * Use DocSpring's API to fill PDF forms, generate PDFs and Word documents from HTML or Word templates, merge PDFs, and request legally binding e-signatures.
  *
  * The version of the OpenAPI document: v2
  * Contact: DocSpring <support@docspring.com>
@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// Submission : Data submitted to a template, and the PDF generated from it.
+/// Submission : Data submitted to a template, and the files generated from it (a PDF, a Word document, an OpenDocument file, or more than one of them).
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Submission {
     /// The submission's ID.
@@ -20,7 +20,7 @@ pub struct Submission {
     /// Null once the template has been permanently deleted.
     #[serde(rename = "template_id", deserialize_with = "Option::deserialize")]
     pub template_id: Option<String>,
-    /// The template's type: `pdf` or `html`.
+    /// The template's type: `pdf`, `html` or `docx`.
     #[serde(rename = "template_type")]
     pub template_type: models::TemplateType,
     /// The published version of the template the submission used. Null for the draft.
@@ -32,7 +32,7 @@ pub struct Submission {
     /// `api`: created with the API. `web`: a web form. `reprocess`: a copy of another submission, made to generate its PDF again.
     #[serde(rename = "source")]
     pub source: models::SubmissionSource,
-    /// `pending` until the PDF has been generated, then `processed`. `waiting_for_signature_requests` until every signature request is completed. `insufficient_credits`: waiting for credits; `error_message` says whether the PDF is generated once you add them. `account_suspended`: waiting for the account to be reactivated, for up to 30 days. Waiting ends in `error` if it's discarded or takes over 30 days. Every other state is final, with no PDF: `invalid_data` (the data doesn't match the template's fields: see `data_errors`), `declined` (a signature request was declined), and the states where generating the PDF failed, which have an `error_message`: `syntax_error` (a mistake in an HTML template's Liquid or SCSS), `image_download_failed` or `image_processing_failed` (an image in the data or the template couldn't be downloaded or read) and `error` (anything else). Older submissions can also be `license_revoked` or `accidental`.
+    /// `pending` until the files have been generated, then `processed`. `waiting_for_signature_requests` until every signature request is completed. `insufficient_credits`: waiting for credits; `error_message` says whether the files are generated once you add them. `account_suspended`: waiting for the account to be reactivated, for up to 30 days. Waiting ends in `error` if it's discarded or takes over 30 days. Every other state is final, with no files: `invalid_data` (the data doesn't match the template's fields: see `data_errors`), `declined` (a signature request was declined), and the states where generating the files failed, which have an `error_message`: `syntax_error` (a mistake in an HTML template's Liquid or SCSS, or in a Word template's tags), `image_download_failed` or `image_processing_failed` (an image in the data or the template couldn't be downloaded or read) and `error` (anything else). Older submissions can also be `license_revoked` or `accidental`.
     #[serde(rename = "state")]
     pub state: models::SubmissionState,
     /// Test PDFs have a watermark and are free. Live PDFs use credits. Submissions made with a test API token are always test submissions.
@@ -53,7 +53,7 @@ pub struct Submission {
     /// Your own data about the submission, such as an ID from your app. It isn't printed on the PDF. Two keys also change the PDF: `pdf_filename` names its file (`files.pdf.filename`, and its download), and `pdf_title` is its title in the PDF's document properties (and an HTML template's `<title>`, unless its HTML has one). Without `pdf_title`, the title is the template's name. In `pdf_filename`, a `.pdf` ending is removed, each run of characters other than letters, digits, `-`, `_` and `.` becomes one `_`, and the first 128 characters are kept, then `.pdf` is added. Without it, the file is named after the submission's ID (`sub_1234567890abcdef01.pdf`).
     #[serde(rename = "metadata")]
     pub metadata: std::collections::HashMap<String, serde_json::Value>,
-    /// The generated files: `pdf` once the submission has been processed, `png` (the images of the PDF's pages, when `output_formats` has it: `files.png.pages[0]` is page 1), `audit_trail` once its signature requests are completed, and `preview` once a preview PDF has been generated. Empty once the submission has expired.
+    /// The generated files: `pdf`, `docx` and `odt` (by `output_formats`) once the submission has been processed, `png` (the images of the PDF's pages, when `output_formats` has it: `files.png.pages[0]` is page 1), `audit_trail` once its signature requests are completed, and `preview` once a preview PDF has been generated. Empty once the submission has expired.
     #[serde(rename = "files")]
     pub files: models::SubmissionFiles,
     /// An expired submission's data, metadata, password and PDF have been deleted.
@@ -83,7 +83,7 @@ pub struct Submission {
     /// The text of each field that didn't fit in it, by field name. Left out (null) with `data`, and empty once the submission has expired.
     #[serde(rename = "truncated_text", deserialize_with = "Option::deserialize")]
     pub truncated_text: Option<std::collections::HashMap<String, Vec<String>>>,
-    /// What the submission makes: `pdf`, and `png` (an image of each page of the PDF, up to 100 pages) when you ask for it. Default `["pdf"]`. POST /submissions/{submission_id}/generate_files adds `png` to a processed submission.
+    /// What the submission makes: `pdf`, `docx` (a Word document, from a Word template), `odt` (an OpenDocument file, the format LibreOffice uses, converted from a Word template's Word document), and `png` (an image of each page of the PDF, up to 100 pages, which adds `pdf`) when you ask for it. Default `["pdf"]`, or a Word template's `output_format`. POST /submissions/{submission_id}/generate_files adds `png`, and a Word template's submission's `pdf`, `docx` or `odt`, to a processed submission.
     #[serde(rename = "output_formats")]
     pub output_formats: Vec<models::OutputFormat>,
     /// When the preview PDF was generated. Null if there is no preview.
@@ -95,7 +95,7 @@ pub struct Submission {
 }
 
 impl Submission {
-    /// Data submitted to a template, and the PDF generated from it.
+    /// Data submitted to a template, and the files generated from it (a PDF, a Word document, an OpenDocument file, or more than one of them).
     pub fn new(
         id: String,
         template_id: Option<String>,

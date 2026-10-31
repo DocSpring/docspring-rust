@@ -1,7 +1,7 @@
 /*
  * DocSpring API
  *
- * Use DocSpring's API to programmatically fill out PDF forms, convert HTML to PDFs, merge PDFs, or request legally binding e-signatures.
+ * Use DocSpring's API to fill PDF forms, generate PDFs and Word documents from HTML or Word templates, merge PDFs, and request legally binding e-signatures.
  *
  * The version of the OpenAPI document: v2
  * Contact: DocSpring <support@docspring.com>
@@ -11,8 +11,8 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// TemplateDocumentState : Where a template's PDF is in its processing.
-/// Where a template's PDF is in its processing.
+/// TemplateDocumentState : Where a template's document is in its processing.
+/// Where a template's document is in its processing.
 ///
 /// A value added to the API after this release is `Unknown`, with the value as the API sent it. A later release can
 /// add variants, so a `match` needs a wildcard arm.
@@ -26,6 +26,8 @@ pub enum TemplateDocumentState {
     UnknownError,
     Downloading,
     DownloadFailed,
+    Converting,
+    ConversionFailed,
 
     /// A value this release doesn't know, as the API sent it
     Unknown(String),
@@ -41,6 +43,8 @@ impl TemplateDocumentState {
         Self::UnknownError,
         Self::Downloading,
         Self::DownloadFailed,
+        Self::Converting,
+        Self::ConversionFailed,
     ];
 
     /// The value as the API sends it
@@ -53,6 +57,8 @@ impl TemplateDocumentState {
             Self::UnknownError => "unknown_error",
             Self::Downloading => "downloading",
             Self::DownloadFailed => "download_failed",
+            Self::Converting => "converting",
+            Self::ConversionFailed => "conversion_failed",
             Self::Unknown(value) => value,
         }
     }
@@ -73,6 +79,8 @@ impl From<&str> for TemplateDocumentState {
             "unknown_error" => Self::UnknownError,
             "downloading" => Self::Downloading,
             "download_failed" => Self::DownloadFailed,
+            "converting" => Self::Converting,
+            "conversion_failed" => Self::ConversionFailed,
             _ => Self::Unknown(value.to_owned()),
         }
     }

@@ -1,7 +1,7 @@
 /*
  * DocSpring API
  *
- * Use DocSpring's API to programmatically fill out PDF forms, convert HTML to PDFs, merge PDFs, or request legally binding e-signatures.
+ * Use DocSpring's API to fill PDF forms, generate PDFs and Word documents from HTML or Word templates, merge PDFs, and request legally binding e-signatures.
  *
  * The version of the OpenAPI document: v2
  * Contact: DocSpring <support@docspring.com>
@@ -11,14 +11,17 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// GenerateFilesFormat : A format DocSpring can add to a processed submission: `png` (images of the PDF's pages).
-/// A format DocSpring can add to a processed submission: `png` (images of the PDF's pages).
+/// GenerateFilesFormat : A format DocSpring can add to a processed submission: `pdf`, `docx` or `odt` (a Word template's submission's PDF, Word document or OpenDocument file), or `png` (images of the PDF's pages).
+/// A format DocSpring can add to a processed submission: `pdf`, `docx` or `odt` (a Word template's submission's PDF, Word document or OpenDocument file), or `png` (images of the PDF's pages).
 ///
 /// A value added to the API after this release is `Unknown`, with the value as the API sent it. A later release can
 /// add variants, so a `match` needs a wildcard arm.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[non_exhaustive]
 pub enum GenerateFilesFormat {
+    Pdf,
+    Docx,
+    Odt,
     Png,
 
     /// A value this release doesn't know, as the API sent it
@@ -27,11 +30,15 @@ pub enum GenerateFilesFormat {
 
 impl GenerateFilesFormat {
     /// The values this release knows
-    pub const VALUES: &'static [GenerateFilesFormat] = &[Self::Png];
+    pub const VALUES: &'static [GenerateFilesFormat] =
+        &[Self::Pdf, Self::Docx, Self::Odt, Self::Png];
 
     /// The value as the API sends it
     pub fn as_str(&self) -> &str {
         match self {
+            Self::Pdf => "pdf",
+            Self::Docx => "docx",
+            Self::Odt => "odt",
             Self::Png => "png",
             Self::Unknown(value) => value,
         }
@@ -46,6 +53,9 @@ impl GenerateFilesFormat {
 impl From<&str> for GenerateFilesFormat {
     fn from(value: &str) -> Self {
         match value {
+            "pdf" => Self::Pdf,
+            "docx" => Self::Docx,
+            "odt" => Self::Odt,
             "png" => Self::Png,
             _ => Self::Unknown(value.to_owned()),
         }
@@ -89,6 +99,6 @@ impl std::fmt::Display for GenerateFilesFormat {
 
 impl Default for GenerateFilesFormat {
     fn default() -> GenerateFilesFormat {
-        Self::Png
+        Self::Pdf
     }
 }

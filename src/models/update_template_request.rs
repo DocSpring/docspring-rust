@@ -1,7 +1,7 @@
 /*
  * DocSpring API
  *
- * Use DocSpring's API to programmatically fill out PDF forms, convert HTML to PDFs, merge PDFs, or request legally binding e-signatures.
+ * Use DocSpring's API to fill PDF forms, generate PDFs and Word documents from HTML or Word templates, merge PDFs, and request legally binding e-signatures.
  *
  * The version of the OpenAPI document: v2
  * Contact: DocSpring <support@docspring.com>
@@ -25,6 +25,9 @@ pub struct UpdateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub description: Option<Option<String>>,
+    /// What each submission makes unless its request sets `output_formats`: `docx` (a Word document), `odt` (an OpenDocument file, converted from the Word document) or `pdf`. A Word template's is chosen when it's created; PDF and HTML templates always make PDFs. A Word template that encrypts its PDFs makes PDFs, because Word documents and OpenDocument files can't be password-protected.
+    #[serde(rename = "output_format", skip_serializing_if = "Option::is_none")]
+    pub output_format: Option<models::OutputFormat>,
     /// The ID of the folder the template is in. Null for a template at the root. Setting it moves the template and all of its published versions.
     #[serde(
         rename = "parent_folder_id",
@@ -60,7 +63,7 @@ pub struct UpdateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub allow_skipping_optional_fields: Option<bool>,
-    /// The hosted form that /templates/{template_id}/form shows when its URL has no `mode` parameter: `web` (the web form), `visual` (the visual form, where fields are filled in on the PDF) or `dual` (both, in tabs). HTML templates have no visual form, so `web` is the only value they accept.
+    /// The hosted form that /templates/{template_id}/form shows when its URL has no `mode` parameter: `web` (the web form), `visual` (the visual form, where fields are filled in on the PDF) or `dual` (both, in tabs). Only PDF templates have a visual form, so other templates accept only `web`.
     #[serde(rename = "default_form_mode", skip_serializing_if = "Option::is_none")]
     pub default_form_mode: Option<models::TemplateFormMode>,
     /// Generate PDFs whose text and check fields stay fillable ("Generate Editable PDFs"). A submission's `editable` overrides it.
@@ -90,7 +93,7 @@ pub struct UpdateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub embed_edit_allow_document_replacement: Option<bool>,
-    /// Encrypt generated PDFs with `encrypt_pdfs_password`.
+    /// Encrypt generated PDFs with `encrypt_pdfs_password`. A Word template can only encrypt its PDFs when its `output_format` is `pdf`, because Word documents and OpenDocument files can't be password-protected.
     #[serde(rename = "encrypt_pdfs", skip_serializing_if = "Option::is_none")]
     pub encrypt_pdfs: Option<bool>,
     /// The password that opens encrypted PDFs. It's never returned; `has_encrypt_pdfs_password` says if it's set.
@@ -119,7 +122,7 @@ pub struct UpdateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub merge_audit_trail_pdf: Option<bool>,
-    /// Date fields also accept NN/NN/YYYY dates (with slashes, dashes or dots), read in the order of the template's default date format: month first for %m/%d/%Y, day first for %d/%m/%Y. When false, date fields only accept YYYY-MM-DD. Applies to PDF templates: an HTML template's date fields only accept YYYY-MM-DD. Date fields that include a time take RFC 3339 date-times either way.
+    /// Date fields also accept NN/NN/YYYY dates (with slashes, dashes or dots), read in the order of the template's default date format: month first for %m/%d/%Y, day first for %d/%m/%Y. When false, date fields only accept YYYY-MM-DD. Applies to PDF templates: an HTML or Word template's date fields only accept YYYY-MM-DD. Date fields that include a time take RFC 3339 date-times either way.
     #[serde(
         rename = "parse_dates_using_template_date_format",
         skip_serializing_if = "Option::is_none"
@@ -168,7 +171,7 @@ pub struct UpdateTemplateRequest {
     )]
     pub predefined_fields_sample_data:
         Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
-    /// The HTML of an HTML template, as a Liquid template. Null for PDF templates.
+    /// The HTML of an HTML template, as a Liquid template. Null for PDF and Word templates.
     #[serde(
         rename = "html",
         default,
@@ -219,6 +222,7 @@ impl UpdateTemplateRequest {
         UpdateTemplateRequest {
             name: None,
             description: None,
+            output_format: None,
             parent_folder_id: None,
             locked: None,
             add_signature_request_submission_id_footers: None,

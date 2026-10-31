@@ -1,7 +1,8 @@
 # DocSpring Rust SDK
 
 The official Rust client for the [DocSpring API](https://docspring.com/docs/api/). DocSpring fills PDF
-templates with your data, generates PDFs from HTML templates, combines PDFs and collects e-signatures.
+forms with your data, generates PDFs and Word documents from HTML and Word templates, combines PDFs and collects
+e-signatures.
 
 [Documentation](https://docspring.com/docs/) · [API reference](https://docspring.com/docs/api/) ·
 [crates.io](https://crates.io/crates/docspring) · [Changelog](https://github.com/DocSpring/docspring-rust/blob/main/CHANGELOG.md)
@@ -9,7 +10,7 @@ templates with your data, generates PDFs from HTML templates, combines PDFs and 
 The code in this repository is generated from DocSpring's OpenAPI spec ([About this SDK](#about-this-sdk)). Issues and
 pull requests are welcome.
 
-Version 4.2.0. Requires Rust 1.88 or later.
+Version 4.3.0. Requires Rust 1.88 or later.
 
 ## Install and configure
 
@@ -17,7 +18,7 @@ Add the crate to your `Cargo.toml`, with Tokio to run its async methods and serd
 
 ```toml
 [dependencies]
-docspring = "4.2.0"
+docspring = "4.3.0"
 serde_json = "1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 ```
@@ -157,11 +158,11 @@ Rust code for every method.
 | [`test_authentication`](https://github.com/DocSpring/docspring-rust/blob/main/docs/Client.md#test_authentication) | Test authentication |
 | [`update_signature_request`](https://github.com/DocSpring/docspring-rust/blob/main/docs/Client.md#update_signature_request) | Update a signature request |
 | [`update_template`](https://github.com/DocSpring/docspring-rust/blob/main/docs/Client.md#update_template) | Update a template |
-| [`update_template_document`](https://github.com/DocSpring/docspring-rust/blob/main/docs/Client.md#update_template_document) | Replace a template's PDF |
+| [`update_template_document`](https://github.com/DocSpring/docspring-rust/blob/main/docs/Client.md#update_template_document) | Replace a template's document |
 | [`update_template_fields`](https://github.com/DocSpring/docspring-rust/blob/main/docs/Client.md#update_template_fields) | Update a template's fields |
 | [`update_webhook`](https://github.com/DocSpring/docspring-rust/blob/main/docs/Client.md#update_webhook) | Update a webhook |
-| [`upload_template`](https://github.com/DocSpring/docspring-rust/blob/main/docs/Client.md#upload_template) | Create a PDF template from an uploaded PDF |
-| [`upload_template_document`](https://github.com/DocSpring/docspring-rust/blob/main/docs/Client.md#upload_template_document) | Replace a template's PDF with an uploaded PDF |
+| [`upload_template`](https://github.com/DocSpring/docspring-rust/blob/main/docs/Client.md#upload_template) | Create a template from an uploaded PDF or Word document |
+| [`upload_template_document`](https://github.com/DocSpring/docspring-rust/blob/main/docs/Client.md#upload_template_document) | Replace a template's document with an uploaded file |
 | [`validate_submission`](https://github.com/DocSpring/docspring-rust/blob/main/docs/Client.md#validate_submission) | Check a submission without creating it |
 
 ## Errors

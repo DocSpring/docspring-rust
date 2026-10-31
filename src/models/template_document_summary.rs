@@ -1,7 +1,7 @@
 /*
  * DocSpring API
  *
- * Use DocSpring's API to programmatically fill out PDF forms, convert HTML to PDFs, merge PDFs, or request legally binding e-signatures.
+ * Use DocSpring's API to fill PDF forms, generate PDFs and Word documents from HTML or Word templates, merge PDFs, and request legally binding e-signatures.
  *
  * The version of the OpenAPI document: v2
  * Contact: DocSpring <support@docspring.com>
@@ -11,25 +11,25 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// TemplateDocumentSummary : A PDF template's PDF, as template lists show it.
+/// TemplateDocumentSummary : A PDF template's PDF or a Word template's Word document, as template lists show it.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TemplateDocumentSummary {
-    /// The PDF's file name. Null until a `document_url` has been downloaded.
+    /// The file's name. Null until a `document_url` has been downloaded or an OpenDocument file converted.
     #[serde(rename = "filename", deserialize_with = "Option::deserialize")]
     pub filename: Option<String>,
-    /// `pending` while DocSpring processes the PDF, then `processed` (`ready` says when its pages are done too). `password_required`, `malformed_pdf` and `unknown_error` mean the PDF couldn't be processed, and `error_message` says why: upload it again or upload another one. `downloading` while DocSpring downloads a `document_url`, then as for an upload. `download_failed` means it couldn't be downloaded, and `error_message` says why. A template keeps its PDF while a new one is downloaded, and when it couldn't be.
+    /// `pending` while DocSpring processes the PDF, then `processed` (`ready` says when its pages are done too). `password_required`, `malformed_pdf` and `unknown_error` mean the PDF couldn't be processed, and `error_message` says why: upload it again or upload another one. `downloading` while DocSpring downloads a `document_url`, then as for an upload. `download_failed` means it couldn't be downloaded, and `error_message` says why. `converting` while DocSpring converts an OpenDocument file (.odt) uploaded to a Word template to a Word document, and `conversion_failed` when it couldn't, with `error_message` saying why. A template keeps its document while a new one is downloaded or converted, and when it couldn't be. A Word document is `processed` once it's uploaded, downloaded or converted.
     #[serde(rename = "state")]
     pub state: models::TemplateDocumentState,
-    /// Why the PDF couldn't be processed or downloaded, and how to fix it. Null unless `state` is an error.
+    /// Why the PDF couldn't be processed, or the document downloaded or converted, and how to fix it. Null unless `state` is an error.
     #[serde(rename = "error_message", deserialize_with = "Option::deserialize")]
     pub error_message: Option<String>,
-    /// 0 until the PDF has been processed.
+    /// 0 until the PDF has been processed. 0 for a Word document, whose pages depend on the data.
     #[serde(rename = "page_count")]
     pub page_count: i32,
 }
 
 impl TemplateDocumentSummary {
-    /// A PDF template's PDF, as template lists show it.
+    /// A PDF template's PDF or a Word template's Word document, as template lists show it.
     pub fn new(
         filename: Option<String>,
         state: models::TemplateDocumentState,

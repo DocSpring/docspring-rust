@@ -8,7 +8,7 @@ Name | Type | Description | Notes
 **template_id** | **String** | The template's ID. | 
 **version** | Option<**String**> | The published version that was rendered, such as `1.2.0`. Null for the draft. | 
 **state** | [**models::TemplatePreviewState**](TemplatePreviewState.md) | `pending` while it renders (usually a few seconds), then `processed`, or `error` with an `error_message`. | 
-**error_message** | Option<**String**> | Why the preview couldn't be rendered, such as an error in an HTML template's Liquid, or a value in the data that a field can't print. | 
+**error_message** | Option<**String**> | Why the preview couldn't be rendered, such as an error in an HTML or Word template's Liquid, or a value in the data that a field can't print. | 
 **page_count** | Option<**i32**> | How many pages the template printed, once it's processed. | 
 **pages** | [**Vec<models::PageImage>**](PageImage.md) | A PNG image of each page once it's processed, in order: `pages[0]` is page 1. A preview has no PDF. Their `download_url`s expire, so get the preview again when you need them. | 
 **expires_at** | **chrono::DateTime<chrono::FixedOffset>** | When the preview and its images are deleted. | 
