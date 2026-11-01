@@ -266,7 +266,7 @@ pub struct Field {
     /// Check and shape display only: the value a string or number field's value is compared with, by `string_condition_type` or `number_condition_type`, to decide whether the check mark or shape prints. Boolean fields print when `true` (see `invert_boolean_condition`), and other types print when they have a value.
     #[serde(rename = "condition", deserialize_with = "Option::deserialize")]
     pub condition: Option<String>,
-    /// String fields with check or shape display: how the value is compared with `condition`: `equals`, `contains`, `starts_with`, `ends_with`, or `regex`, where `condition` is a regular expression the value must match.
+    /// String fields with check or shape display: how the value is compared with `condition`: `equals`, `contains`, `starts_with`, `ends_with`, or `regex`, where `condition` is a regular expression (RE2 syntax) the value must match; each has a `not_` form that prints when it doesn't match (`not_equals`, `not_regex`, ...). `blank` prints when the value is empty or only spaces and line breaks, and `not_blank` when it isn't; they ignore `condition`.
     #[serde(rename = "string_condition_type")]
     pub string_condition_type: models::StringConditionType,
     /// Number fields with check or shape display: how the value is compared with `condition`: `equals`, `gt` (greater than), `gte` (greater than or equal to), `lt` (less than), `lte` (less than or equal to), or `range`, between `number_condition_range_min` and `number_condition_range_max`.

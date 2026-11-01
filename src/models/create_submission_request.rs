@@ -14,13 +14,13 @@ use serde::{Deserialize, Serialize};
 /// CreateSubmissionRequest : The submission's data and settings.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct CreateSubmissionRequest {
-    /// Test PDFs have a watermark and are free. Live PDFs use credits. Submissions made with a test API token are always test submissions.
+    /// Test PDFs have a watermark and are free. Live PDFs use credits. Submissions made with a test API token are always test submissions, and the demo API token's are always live.
     #[serde(rename = "test", skip_serializing_if = "Option::is_none")]
     pub test: Option<bool>,
     /// `true` keeps the PDF's text and check fields fillable, and `false` flattens every field. Left out, the template decides: its `editable_submissions` setting, or each field's own Editable option. A response shows the template's setting when the request left this out. Can't be `true` with `signature_requests`.
     #[serde(rename = "editable", skip_serializing_if = "Option::is_none")]
     pub editable: Option<bool>,
-    /// The values of the template's fields, by field name. Required for PDF and Word templates, unless `signature_requests` collects them (PDF templates only).
+    /// The values of the template's fields, by field name. Required for PDF templates, Word templates and page designs, unless `signature_requests` collects them (PDF templates only).
     #[serde(rename = "data", skip_serializing_if = "Option::is_none")]
     pub data: Option<std::collections::HashMap<String, serde_json::Value>>,
     /// Your own data about the submission, such as an ID from your app. It isn't printed on the PDF. Two keys also change the PDF: `pdf_filename` names its file (`files.pdf.filename`, and its download), and `pdf_title` is its title in the PDF's document properties (and an HTML template's `<title>`, unless its HTML has one). Without `pdf_title`, the title is the template's name. In `pdf_filename`, a `.pdf` ending is removed, each run of characters other than letters, digits, `-`, `_` and `.` becomes one `_`, and the first 128 characters are kept, then `.pdf` is added. Without it, the file is named after the submission's ID (`sub_1234567890abcdef01.pdf`).
@@ -32,7 +32,7 @@ pub struct CreateSubmissionRequest {
     /// What the submission makes: `pdf`, `docx` (a Word document, from a Word template), `odt` (an OpenDocument file, the format LibreOffice uses, converted from a Word template's Word document), and `png` (an image of each page of the PDF, up to 100 pages, which adds `pdf`) when you ask for it. Default `["pdf"]`, or a Word template's `output_format`. POST /submissions/{submission_id}/generate_files adds `png`, and a Word template's submission's `pdf`, `docx` or `odt`, to a processed submission.
     #[serde(rename = "output_formats", skip_serializing_if = "Option::is_none")]
     pub output_formats: Option<Vec<models::OutputFormat>>,
-    /// Seconds after the PDF is generated until the submission expires, up to 10 years (315360000). Default the template's expiration setting. A submission that isn't processed, such as one with invalid data, is kept for at least 48 hours.
+    /// Seconds after the PDF is generated until the submission expires, up to 10 years (315360000). Default the template's expiration setting. A submission that isn't processed, such as one with invalid data, is kept for at least 48 hours. The demo API token's submissions expire within an hour: up to 3600, and that's their default.
     #[serde(rename = "expires_in", skip_serializing_if = "Option::is_none")]
     pub expires_in: Option<i32>,
     /// Changes to field settings for this submission only, by field name, such as `{"name": {"required": false, "font_size": 9}}`. A setting that identifies the field (`id`, `name`, `type`), that only the template sets (such as `description`), or that doesn't apply to the field's type and display type (such as `check_character` on a field displayed as text) is a 422. With `signature_requests`, `editable: true` is a 422, and a `default` for a signature or initials field makes the submission `invalid_data`.
@@ -47,6 +47,36 @@ pub struct CreateSubmissionRequest {
     /// The people who sign the PDF, and fill in their fields first. The PDF is generated once every signature request is completed. PDF templates only. Without `role`s, the first signature request is `Signer 1`, the second `Signer 2`, and so on. To leave a signer out, give every signature request its `role` and leave that one's out. Only the signers sign: a value for a signature or initials field in `data` makes the submission `invalid_data`.
     #[serde(rename = "signature_requests", skip_serializing_if = "Option::is_none")]
     pub signature_requests: Option<Vec<models::SignatureRequestInput>>,
+    /// Whether DocSpring emails the signers their signing links, and sends the reminders and the completed document. Default true. Each signature request's own `send_email` overrides it. A test submission only emails your DocSpring team: every other address is a 422. `true` needs `signature_requests`. DocSpring doesn't email the signers of a form library template: leave `send_email` out, and send them their links yourself.
+    #[serde(rename = "send_email", skip_serializing_if = "Option::is_none")]
+    pub send_email: Option<bool>,
+    /// `parallel` (the default): everyone can sign at once. `sequential`: people sign one step at a time (`signing_step`), and DocSpring emails each step when the one before it is done. Needs `signature_requests`.
+    #[serde(rename = "signing_order", skip_serializing_if = "Option::is_none")]
+    pub signing_order: Option<models::SigningOrder>,
+    /// The subject of the emails that ask people to sign. You can use `{{ signer.name }}`, `{{ signer.email }}`, `{{ document.name }}`, `{{ sender.name }}` and `{{ account.name }}`. Default "<sender> sent you <document> to sign" when you leave it out (a blank subject is a 422). Links and web addresses are shown as plain text (`example[.]com`).
+    #[serde(rename = "email_subject", skip_serializing_if = "Option::is_none")]
+    pub email_subject: Option<String>,
+    /// A message for the people who sign, shown above the signing button. It takes the same variables as `email_subject`. Links and web addresses are shown as plain text. Leave it out for none: a blank message is a 422.
+    #[serde(rename = "email_message", skip_serializing_if = "Option::is_none")]
+    pub email_message: Option<String>,
+    /// People who get a copy of the completed document. They don't sign.
+    #[serde(rename = "cc", skip_serializing_if = "Option::is_none")]
+    pub cc: Option<Vec<String>>,
+    /// Where replies to the emails go: a member of your DocSpring team, or an address at one of your verified email domains. Leave it out for the template's reply-to address (the account owner when it has none).
+    #[serde(rename = "reply_to", skip_serializing_if = "Option::is_none")]
+    pub reply_to: Option<String>,
+    /// Who DocSpring tells when the document is completed or declined, or an email bounces or can't be sent: members of your DocSpring team or addresses at your verified email domains. Leave it out for the template's notification addresses (the account owner when it has none); an empty list means the account owner.
+    #[serde(
+        rename = "notification_emails",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub notification_emails: Option<Vec<String>>,
+    /// Also email `notification_emails` each time someone signs. Default false.
+    #[serde(rename = "notify_when_signed", skip_serializing_if = "Option::is_none")]
+    pub notify_when_signed: Option<bool>,
+    /// Remind people who haven't signed: every `interval_days` days, up to `max_count` times. Each reminder has a new signing link. Without it, DocSpring sends no reminders.
+    #[serde(rename = "reminders", skip_serializing_if = "Option::is_none")]
+    pub reminders: Option<models::SignatureRequestReminders>,
 }
 
 impl CreateSubmissionRequest {
@@ -64,6 +94,15 @@ impl CreateSubmissionRequest {
             html: None,
             css: None,
             signature_requests: None,
+            send_email: None,
+            signing_order: None,
+            email_subject: None,
+            email_message: None,
+            cc: None,
+            reply_to: None,
+            notification_emails: None,
+            notify_when_signed: None,
+            reminders: None,
         }
     }
 }

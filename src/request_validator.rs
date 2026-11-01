@@ -558,6 +558,17 @@ fn check_object(
             }
         }
     }
+    // Only an update's body has minProperties, and it's always 1 (api_clients/scripts/extract_request_schemas)
+    if let Some(limit) = schema_number(schema, "minProperties") {
+        if (data.len() as f64) < limit {
+            details.push(detail(
+                location,
+                pointer,
+                "minProperties",
+                "must have at least one property to change".to_owned(),
+            ));
+        }
+    }
 
     let properties = schema.get("properties").and_then(Value::as_object);
     let mut names: Vec<&String> = data.keys().collect();

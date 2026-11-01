@@ -35,7 +35,7 @@ pub struct Submission {
     /// `pending` until the files have been generated, then `processed`. `waiting_for_signature_requests` until every signature request is completed. `insufficient_credits`: waiting for credits; `error_message` says whether the files are generated once you add them. `account_suspended`: waiting for the account to be reactivated, for up to 30 days. Waiting ends in `error` if it's discarded or takes over 30 days. Every other state is final, with no files: `invalid_data` (the data doesn't match the template's fields: see `data_errors`), `declined` (a signature request was declined), and the states where generating the files failed, which have an `error_message`: `syntax_error` (a mistake in an HTML template's Liquid or SCSS, or in a Word template's tags), `image_download_failed` or `image_processing_failed` (an image in the data or the template couldn't be downloaded or read) and `error` (anything else). Older submissions can also be `license_revoked` or `accidental`.
     #[serde(rename = "state")]
     pub state: models::SubmissionState,
-    /// Test PDFs have a watermark and are free. Live PDFs use credits. Submissions made with a test API token are always test submissions.
+    /// Test PDFs have a watermark and are free. Live PDFs use credits. Submissions made with a test API token are always test submissions, and the demo API token's are always live.
     #[serde(rename = "test")]
     pub test: bool,
     /// `true` keeps the PDF's text and check fields fillable, and `false` flattens every field. Left out, the template decides: its `editable_submissions` setting, or each field's own Editable option. A response shows the template's setting when the request left this out. Can't be `true` with `signature_requests`.
@@ -77,7 +77,10 @@ pub struct Submission {
     /// The people asked to sign the submission (and fill in their fields), in order.
     #[serde(rename = "signature_requests")]
     pub signature_requests: Vec<models::SignatureRequest>,
-    /// The uploads of the submission's PDF to your storage (account integrations).
+    /// `parallel`: everyone can sign at once. `sequential`: people sign one step at a time (each signature request's `signing_step`).
+    #[serde(rename = "signing_order")]
+    pub signing_order: models::SigningOrder,
+    /// The uploads of the submission's PDF to your storage (account integrations), and the emails its template's email actions sent.
     #[serde(rename = "actions")]
     pub actions: Vec<models::SubmissionAction>,
     /// The text of each field that didn't fit in it, by field name. Left out (null) with `data`, and empty once the submission has expired.
@@ -118,6 +121,7 @@ impl Submission {
         updated_at: chrono::DateTime<chrono::FixedOffset>,
         has_password: bool,
         signature_requests: Vec<models::SignatureRequest>,
+        signing_order: models::SigningOrder,
         actions: Vec<models::SubmissionAction>,
         truncated_text: Option<std::collections::HashMap<String, Vec<String>>>,
         output_formats: Vec<models::OutputFormat>,
@@ -145,6 +149,7 @@ impl Submission {
             updated_at,
             has_password,
             signature_requests,
+            signing_order,
             actions,
             truncated_text,
             output_formats,

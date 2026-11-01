@@ -11,8 +11,8 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// SubmissionActionType : The kind of storage a submission action uploads the PDF to.
-/// The kind of storage a submission action uploads the PDF to.
+/// SubmissionActionType : The kind of storage a submission action uploads the PDF to, or `email`.
+/// The kind of storage a submission action uploads the PDF to, or `email`.
 ///
 /// A value added to the API after this release is `Unknown`, with the value as the API sent it. A later release can
 /// add variants, so a `match` needs a wildcard arm.

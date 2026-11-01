@@ -24,7 +24,7 @@ use std::sync::Arc;
 pub trait Api: Send + Sync {
     /// POST /templates/{template_id}/fields
     ///
-    /// Adds fields to a template's draft and returns all of its fields. Publish a version for submissions of published versions to have them.
+    /// Adds fields to a template's draft and returns all of its fields. Publish a version for submissions of published versions to have them. A field with the name of one of the template's fields shares its settings (`type`, `required`, `default`, ...), so a field that sets one to another value is refused: PUT /templates/{template_id}/fields changes them for every field with the name.
     async fn add_template_fields(
         &self,
         params: AddTemplateFieldsParams,
@@ -37,6 +37,14 @@ pub trait Api: Send + Sync {
         &self,
         params: CopyTemplateParams,
     ) -> Result<models::Template, Error<CopyTemplateError>>;
+
+    /// POST /email_actions
+    ///
+    /// Adds an email action to your account. It sends for every template, or only for the templates in `template_ids` and the templates in the folders in `folder_ids` (and the folders inside them). Each template can turn it off or change its settings for that template only (`PUT /templates/{template_id}/email_actions/{email_action_id}/customization`). Without a paid plan (Starter or higher), email actions only email your team: test submissions' emails go to your account's users, and live submissions' emails aren't sent.
+    async fn create_account_email_action(
+        &self,
+        params: CreateAccountEmailActionParams,
+    ) -> Result<models::EmailAction, Error<CreateAccountEmailActionError>>;
 
     /// POST /combined_pdfs
     ///
@@ -53,6 +61,22 @@ pub trait Api: Send + Sync {
         &self,
         params: CreateCustomFileFromUploadParams,
     ) -> Result<models::CustomFile, Error<CreateCustomFileFromUploadError>>;
+
+    /// POST /templates/{template_id}/email_actions
+    ///
+    /// Adds an email action to a template's draft. From then on, each processed submission emails its PDF to the recipients in `to`, `cc` and `bcc`: addresses, and tags for the address in one of the submission's fields (`{{ data.tenant_email }}`) or in its metadata (`{{ metadata.agent_email }}`). With `send_when`, only the submissions whose values meet its conditions send one. Without a paid plan (Starter or higher), email actions only email your team: test submissions' emails go to your account's users, and live submissions' emails aren't sent.
+    async fn create_email_action(
+        &self,
+        params: CreateEmailActionParams,
+    ) -> Result<models::EmailAction, Error<CreateEmailActionError>>;
+
+    /// POST /email_domains
+    ///
+    /// Adds a domain for email actions to send from, and returns the DNS records to add to it. DocSpring checks for them every few minutes, and the domain is verified once its DKIM and DMARC records are found. Needs a paid monthly plan.
+    async fn create_email_domain(
+        &self,
+        params: CreateEmailDomainParams,
+    ) -> Result<models::EmailDomain, Error<CreateEmailDomainError>>;
 
     /// POST /folders
     ///
@@ -80,7 +104,7 @@ pub trait Api: Send + Sync {
 
     /// POST /templates/{template_id}/submissions
     ///
-    /// Creates a submission: fills in a template with your data and generates a PDF. The PDF is generated in the background: on sync.api hosts the request waits for it (unless you pass `wait=false`), otherwise poll GET /submissions/{submission_id} until `state` isn't `pending`.  Data that doesn't match the template's fields returns a 422 with an `invalid_data` error. The submission is still saved, with its errors, so you can find it in DocSpring: the error's `submission_id` is its ID.
+    /// Creates a submission: fills in a template with your data and generates a PDF. The PDF is generated in the background: on sync.api hosts the request waits for it (unless you pass `wait=false`), otherwise poll GET /submissions/{submission_id} until `state` isn't `pending`.  Data that doesn't match the template's fields returns a 422 with an `invalid_data` error. The submission is still saved, with its errors, so you can find it in DocSpring: the error's `submission_id` is its ID.  With `signature_requests`, the PDF is generated once everyone has signed. DocSpring emails each signer a link to sign, unless `send_email` is false, and can send reminders and the completed document.
     async fn create_submission(
         &self,
         params: CreateSubmissionParams,
@@ -96,7 +120,7 @@ pub trait Api: Send + Sync {
 
     /// POST /templates
     ///
-    /// Creates an HTML template, or a PDF or Word template from a file you uploaded with the presigned upload (GET /uploads/presign): pass its `fields.key` as `cache_id`. You can send a link to the file (`document_url`) or the file in base64 (`document_base64`) instead, or send the file with the request with POST /templates/upload. A Word template is made from a Word document (.docx) or an OpenDocument text file (.odt), which DocSpring converts to a Word document. It needs its `output_format`: what each submission makes, a Word document (`docx`), an OpenDocument file (`odt`) or a PDF.  A PDF template is ready to generate PDFs once DocSpring has processed its PDF, a template created from a `document_url` once its document has been downloaded, and one created from an .odt once it has been converted (`ready` is true). On sync.api hosts the request waits for that unless you pass `wait=false`.
+    /// Creates an HTML template, or a PDF or Word template from a file you uploaded with the presigned upload (GET /uploads/presign): pass its `fields.key` as `cache_id`. You can send a link to the file (`document_url`) or the file in base64 (`document_base64`) instead, or send the file with the request with POST /templates/upload. A Word template is made from a Word document (.docx) or an OpenDocument text file (.odt), which DocSpring converts to a Word document. It needs its `output_format`: what each submission makes, a Word document (`docx`), an OpenDocument file (`odt`) or a PDF. A page design (`page_designer`) takes its `layout` in the Page Designer layout format, or starts with an empty page without one.  A PDF template is ready to generate PDFs once DocSpring has processed its PDF, a template created from a `document_url` once its document has been downloaded, and one created from an .odt once it has been converted (`ready` is true). On sync.api hosts the request waits for that unless you pass `wait=false`.
     async fn create_template(
         &self,
         params: CreateTemplateParams,
@@ -104,7 +128,7 @@ pub trait Api: Send + Sync {
 
     /// POST /templates/{template_id}/previews
     ///
-    /// Makes PNG images of a template's pages filled in with the data you send (not a PDF), so you can check how an HTML, PDF or Word template prints with your data before you publish a version or send live data. A Word template's pages are its PDF's, whatever its `output_format`. It renders the template's draft, or the published `version` you ask for. A preview makes no submission and uses no credits, and its pages are watermarked like a test submission's PDF. It's `pending` while it renders: get it with GET /templates/{template_id}/previews/{preview_id} until it's `processed`, with an image of each page, or `error`.
+    /// Makes PNG images of a template's pages filled in with the data you send (not a PDF), so you can check how an HTML, PDF or Word template or a page design prints with your data before you publish a version or send live data. A Word template's pages are its PDF's, whatever its `output_format`. It renders the template's draft, or the published `version` you ask for. A preview makes no submission and uses no credits, and its pages are watermarked like a test submission's PDF. It's `pending` while it renders: get it with GET /templates/{template_id}/previews/{preview_id} until it's `processed`, with an image of each page, or `error`.
     async fn create_template_preview(
         &self,
         params: CreateTemplatePreviewParams,
@@ -118,6 +142,14 @@ pub trait Api: Send + Sync {
         params: CreateWebhookParams,
     ) -> Result<models::Webhook, Error<CreateWebhookError>>;
 
+    /// DELETE /email_actions/{email_action_id}
+    ///
+    /// Deletes one of your account's email actions, with every template's customization of it. Emails it has already queued for submissions aren't sent. Submissions keep the record of the emails it sent.
+    async fn delete_account_email_action(
+        &self,
+        params: DeleteAccountEmailActionParams,
+    ) -> Result<models::EmailAction, Error<DeleteAccountEmailActionError>>;
+
     /// DELETE /custom_files/{custom_file_id}
     ///
     /// Deletes a custom file and returns it. Use a live API token: test tokens can't delete custom files.
@@ -125,6 +157,30 @@ pub trait Api: Send + Sync {
         &self,
         params: DeleteCustomFileParams,
     ) -> Result<models::CustomFile, Error<DeleteCustomFileError>>;
+
+    /// DELETE /templates/{template_id}/email_actions/{email_action_id}
+    ///
+    /// Deletes an email action. Emails it has already queued for submissions aren't sent. Submissions keep the record of the emails it sent.
+    async fn delete_email_action(
+        &self,
+        params: DeleteEmailActionParams,
+    ) -> Result<models::EmailAction, Error<DeleteEmailActionError>>;
+
+    /// DELETE /templates/{template_id}/email_actions/{email_action_id}/customization
+    ///
+    /// Removes the template's changes to one of your account's email actions: it sends for this template as it is, and again if the template had turned it off.
+    async fn delete_email_action_customization(
+        &self,
+        params: DeleteEmailActionCustomizationParams,
+    ) -> Result<models::EmailAction, Error<DeleteEmailActionCustomizationError>>;
+
+    /// DELETE /email_domains/{email_domain_id}
+    ///
+    /// Removes an email domain. Email actions that send from an address at it fail until you add and verify it again, or change their `from_address`. You can then remove its DNS records.
+    async fn delete_email_domain(
+        &self,
+        params: DeleteEmailDomainParams,
+    ) -> Result<models::EmailDomain, Error<DeleteEmailDomainError>>;
 
     /// DELETE /folders/{folder_id}
     ///
@@ -182,6 +238,14 @@ pub trait Api: Send + Sync {
         params: GenerateSubmissionPreviewParams,
     ) -> Result<models::Submission, Error<GenerateSubmissionPreviewError>>;
 
+    /// GET /email_actions/{email_action_id}
+    ///
+    /// Returns one of your account's email actions, with its settings and whether its emails are failing.
+    async fn get_account_email_action(
+        &self,
+        params: GetAccountEmailActionParams,
+    ) -> Result<models::EmailAction, Error<GetAccountEmailActionError>>;
+
     /// GET /combined_pdfs/{combined_pdf_id}
     ///
     /// Returns a combined PDF, with a temporary link to download it once it has been generated.
@@ -197,6 +261,22 @@ pub trait Api: Send + Sync {
         &self,
         params: GetCustomFileParams,
     ) -> Result<models::CustomFile, Error<GetCustomFileError>>;
+
+    /// GET /templates/{template_id}/email_actions/{email_action_id}
+    ///
+    /// Returns one of a template's email actions, with its settings and whether its emails are failing.
+    async fn get_email_action(
+        &self,
+        params: GetEmailActionParams,
+    ) -> Result<models::EmailAction, Error<GetEmailActionError>>;
+
+    /// GET /email_domains/{email_domain_id}
+    ///
+    /// Returns an email domain, whether it's verified, and the DNS records to add to it.
+    async fn get_email_domain(
+        &self,
+        params: GetEmailDomainParams,
+    ) -> Result<models::EmailDomain, Error<GetEmailDomainError>>;
 
     /// GET /folders/{folder_id}
     ///
@@ -291,6 +371,14 @@ pub trait Api: Send + Sync {
         params: GetWebhookParams,
     ) -> Result<models::Webhook, Error<GetWebhookError>>;
 
+    /// GET /email_actions
+    ///
+    /// Returns your account's email actions, newest first, one page at a time. Each one emails the files of every template's processed submissions, or of the templates and folders it lists. A template's own email actions are listed with the template (`GET /templates/{template_id}/email_actions`).
+    async fn list_account_email_actions(
+        &self,
+        params: ListAccountEmailActionsParams,
+    ) -> Result<models::EmailActionList, Error<ListAccountEmailActionsError>>;
+
     /// GET /combined_pdfs
     ///
     /// Returns the combined PDFs in your account, newest first, one page at a time.
@@ -306,6 +394,22 @@ pub trait Api: Send + Sync {
         &self,
         params: ListCustomFilesParams,
     ) -> Result<models::CustomFileList, Error<ListCustomFilesError>>;
+
+    /// GET /templates/{template_id}/email_actions
+    ///
+    /// Returns the email actions of a template's draft, and your account's email actions that send for it, newest first, one page at a time. Each one emails every processed submission's files to the people it lists. An account email action (`template_id` null) shows the settings it sends for this template, with the template's changes in `customization`.
+    async fn list_email_actions(
+        &self,
+        params: ListEmailActionsParams,
+    ) -> Result<models::EmailActionList, Error<ListEmailActionsError>>;
+
+    /// GET /email_domains
+    ///
+    /// Returns the domains in your account that email actions can send from once they're verified, newest first, one page at a time.
+    async fn list_email_domains(
+        &self,
+        params: ListEmailDomainsParams,
+    ) -> Result<models::EmailDomainList, Error<ListEmailDomainsError>>;
 
     /// GET /folders
     ///
@@ -411,12 +515,52 @@ pub trait Api: Send + Sync {
         params: RestoreTemplateVersionParams,
     ) -> Result<models::Template, Error<RestoreTemplateVersionError>>;
 
+    /// POST /email_actions/{email_action_id}/test_email
+    ///
+    /// Sends the account email action's email to the API token's user only, as it would go for one template it sends for, with each field shown as its name in brackets, so you can check how it looks. When the email action attaches its files and that template is a PDF template, the test attaches the template's blank PDF. It isn't recorded on any submission.
+    async fn send_account_email_action_test_email(
+        &self,
+        params: SendAccountEmailActionTestEmailParams,
+    ) -> Result<models::EmailActionTestEmail, Error<SendAccountEmailActionTestEmailError>>;
+
+    /// POST /templates/{template_id}/email_actions/{email_action_id}/test_email
+    ///
+    /// Sends the email action's email to the API token's user only, with each field and metadata value shown as its name in brackets, so you can check how it looks. When the email action attaches its files and the template is a PDF template, the test attaches the template's blank PDF. It isn't recorded on any submission. Without a paid plan, the user needs a confirmed email address.
+    async fn send_email_action_test_email(
+        &self,
+        params: SendEmailActionTestEmailParams,
+    ) -> Result<models::EmailActionTestEmail, Error<SendEmailActionTestEmailError>>;
+
     /// GET /authentication
     ///
     /// Checks whether your API token is valid by making an authenticated request. This endpoint is useful for verifying credentials during setup or troubleshooting issues.
     async fn test_authentication(
         &self,
     ) -> Result<models::AuthenticationCheck, Error<TestAuthenticationError>>;
+
+    /// PUT /email_actions/{email_action_id}
+    ///
+    /// Changes one of your account's email actions. Properties left out keep their values. Its templates' customizations keep their own changes, and follow the rest. Set `enabled` to false to stop its emails for every template.
+    async fn update_account_email_action(
+        &self,
+        params: UpdateAccountEmailActionParams,
+    ) -> Result<models::EmailAction, Error<UpdateAccountEmailActionError>>;
+
+    /// PUT /templates/{template_id}/email_actions/{email_action_id}
+    ///
+    /// Changes an email action's settings. Properties left out keep their values. Set `enabled` to false to stop its emails, or to true to turn it back on after DocSpring turned it off.
+    async fn update_email_action(
+        &self,
+        params: UpdateEmailActionParams,
+    ) -> Result<models::EmailAction, Error<UpdateEmailActionError>>;
+
+    /// PUT /templates/{template_id}/email_actions/{email_action_id}/customization
+    ///
+    /// Changes one of your account's email actions for this template only, replacing any changes the template had. Each setting you send is changed for this template, and the ones you leave out follow the account email action, including later changes to it. Set `enabled` to false to stop it sending for this template.
+    async fn update_email_action_customization(
+        &self,
+        params: UpdateEmailActionCustomizationParams,
+    ) -> Result<models::EmailAction, Error<UpdateEmailActionCustomizationError>>;
 
     /// PUT /signature_requests/{signature_request_id}
     ///
@@ -428,7 +572,7 @@ pub trait Api: Send + Sync {
 
     /// PUT /templates/{template_id}
     ///
-    /// Changes a template's draft. Properties left out keep their values. `defaults` and `html_engine_options` replace the whole object, and `field_groups` changes only the groups it lists. Settings such as `webhook_url`, `public_submissions` and `expire_after` apply to every published version too, and setting `parent_folder_id` moves the template and all of its published versions.
+    /// Changes a template's draft. Properties left out keep their values. `defaults`, `html_engine_options` and a page design's `layout` replace the whole object, and `field_groups` changes only the groups it lists. A new layout adds a field for each new value it reads. Settings such as `webhook_url`, `public_submissions` and `expire_after` apply to every published version too, and setting `parent_folder_id` moves the template and all of its published versions.
     async fn update_template(
         &self,
         params: UpdateTemplateParams,
@@ -481,6 +625,14 @@ pub trait Api: Send + Sync {
         &self,
         params: ValidateSubmissionParams,
     ) -> Result<models::SubmissionValidation, Error<ValidateSubmissionError>>;
+
+    /// POST /email_domains/{email_domain_id}/verify
+    ///
+    /// Checks the email domain's DNS records now, instead of waiting for the next check. If DocSpring has stopped looking for its DKIM records (3 days after they were created), it starts again with new ones: replace the CNAME records with them.
+    async fn verify_email_domain(
+        &self,
+        params: VerifyEmailDomainParams,
+    ) -> Result<models::EmailDomain, Error<VerifyEmailDomainError>>;
 }
 
 /// Sends requests to DocSpring's API. Build one with [`Client::builder`] or [`Client::from_env`]. Its methods are the
@@ -504,6 +656,8 @@ pub struct AddTemplateFieldsParams {
     pub template_id: String,
     /// The fields to add to the template's draft.
     pub body: models::AddTemplateFieldsRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::copy_template`]
@@ -514,6 +668,18 @@ pub struct CopyTemplateParams {
     pub template_id: String,
     /// Settings for the copy.
     pub body: Option<models::CopyTemplateRequest>,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
+}
+
+/// struct for passing parameters to the method [`Api::create_account_email_action`]
+#[derive(Clone, Debug, ::bon::Builder)]
+#[builder(on(String, into), on(std::path::PathBuf, into))]
+pub struct CreateAccountEmailActionParams {
+    /// The account email action to create. Properties left out get their defaults, and it sends for every template unless it lists `template_ids` or `folder_ids`.
+    pub body: models::CreateAccountEmailActionRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_combined_pdf`]
@@ -524,7 +690,7 @@ pub struct CreateCombinedPdfParams {
     pub body: models::CreateCombinedPdfRequest,
     /// Wait until the PDF has been generated before responding. Default true on sync.api hosts.
     pub wait: Option<bool>,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of creating another combined PDF. Send a new key with each new combined PDF, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` means the first request is still being processed: send the request again in a few seconds.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
     pub idempotency_key: Option<String>,
 }
 
@@ -534,6 +700,30 @@ pub struct CreateCombinedPdfParams {
 pub struct CreateCustomFileFromUploadParams {
     /// The uploaded file to create the custom file from.
     pub body: models::CreateCustomFileFromUploadRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
+}
+
+/// struct for passing parameters to the method [`Api::create_email_action`]
+#[derive(Clone, Debug, ::bon::Builder)]
+#[builder(on(String, into), on(std::path::PathBuf, into))]
+pub struct CreateEmailActionParams {
+    /// The template's ID.
+    pub template_id: String,
+    /// The email action to create. Properties left out get their defaults.
+    pub body: models::CreateEmailActionRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
+}
+
+/// struct for passing parameters to the method [`Api::create_email_domain`]
+#[derive(Clone, Debug, ::bon::Builder)]
+#[builder(on(String, into), on(std::path::PathBuf, into))]
+pub struct CreateEmailDomainParams {
+    /// The domain to add.
+    pub body: models::CreateEmailDomainRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_folder`]
@@ -542,6 +732,8 @@ pub struct CreateCustomFileFromUploadParams {
 pub struct CreateFolderParams {
     /// The folder to create.
     pub body: models::CreateFolderRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_signature_request_event`]
@@ -552,6 +744,8 @@ pub struct CreateSignatureRequestEventParams {
     pub signature_request_id: String,
     /// The event to record.
     pub body: models::CreateSignatureRequestEventRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_signature_request_token`]
@@ -562,6 +756,8 @@ pub struct CreateSignatureRequestTokenParams {
     pub signature_request_id: String,
     /// The kind of link to make. Send no body for an `api` token.
     pub body: Option<models::CreateSignatureRequestTokenRequest>,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_submission`]
@@ -572,11 +768,11 @@ pub struct CreateSubmissionParams {
     pub template_id: String,
     /// The submission's data and settings.
     pub body: models::CreateSubmissionRequest,
-    /// The template version to use: a published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` or `draft`. Default `latest` (the draft when no version has been published).
+    /// The template version to use: a published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` (the newest published version, or the draft when none has been published) or `draft`. Default `latest`.
     pub version: Option<String>,
     /// Wait until the files have been generated before responding. Default true on sync.api hosts.
     pub wait: Option<bool>,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of creating another submission. Send a new key with each new submission, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` means the first request is still being processed: send the request again in a few seconds.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
     pub idempotency_key: Option<String>,
 }
 
@@ -588,7 +784,7 @@ pub struct CreateSubmissionBatchParams {
     pub body: models::CreateSubmissionBatchRequest,
     /// Wait until every file in the batch has been generated before responding. Default true on sync.api hosts.
     pub wait: Option<bool>,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of creating another batch. Send a new key with each new batch, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` means the first request is still being processed: send the request again in a few seconds.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
     pub idempotency_key: Option<String>,
 }
 
@@ -600,6 +796,8 @@ pub struct CreateTemplateParams {
     pub body: models::CreateTemplateRequest,
     /// Wait until the PDF has been processed, a `document_url`'s PDF or Word document downloaded, and an OpenDocument file converted, before responding. Default true on sync.api hosts.
     pub wait: Option<bool>,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_template_preview`]
@@ -610,8 +808,10 @@ pub struct CreateTemplatePreviewParams {
     pub template_id: String,
     /// The data to render the template with.
     pub body: models::CreateTemplatePreviewRequest,
-    /// A published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` or `draft`. Default `draft`.
+    /// A published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` (the newest published version, or the draft when none has been published) or `draft`. Default `draft`.
     pub version: Option<String>,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_webhook`]
@@ -620,6 +820,18 @@ pub struct CreateTemplatePreviewParams {
 pub struct CreateWebhookParams {
     /// The webhook to create.
     pub body: models::CreateWebhookRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
+}
+
+/// struct for passing parameters to the method [`Api::delete_account_email_action`]
+#[derive(Clone, Debug, ::bon::Builder)]
+#[builder(on(String, into), on(std::path::PathBuf, into))]
+pub struct DeleteAccountEmailActionParams {
+    /// The account email action's ID.
+    pub email_action_id: String,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::delete_custom_file`]
@@ -628,6 +840,42 @@ pub struct CreateWebhookParams {
 pub struct DeleteCustomFileParams {
     /// The custom file's ID.
     pub custom_file_id: String,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
+}
+
+/// struct for passing parameters to the method [`Api::delete_email_action`]
+#[derive(Clone, Debug, ::bon::Builder)]
+#[builder(on(String, into), on(std::path::PathBuf, into))]
+pub struct DeleteEmailActionParams {
+    /// The template's ID.
+    pub template_id: String,
+    /// The email action's ID.
+    pub email_action_id: String,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
+}
+
+/// struct for passing parameters to the method [`Api::delete_email_action_customization`]
+#[derive(Clone, Debug, ::bon::Builder)]
+#[builder(on(String, into), on(std::path::PathBuf, into))]
+pub struct DeleteEmailActionCustomizationParams {
+    /// The template's ID.
+    pub template_id: String,
+    /// The ID of one of your account's email actions that sends for the template.
+    pub email_action_id: String,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
+}
+
+/// struct for passing parameters to the method [`Api::delete_email_domain`]
+#[derive(Clone, Debug, ::bon::Builder)]
+#[builder(on(String, into), on(std::path::PathBuf, into))]
+pub struct DeleteEmailDomainParams {
+    /// The email domain's ID.
+    pub email_domain_id: String,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::delete_folder`]
@@ -636,6 +884,8 @@ pub struct DeleteCustomFileParams {
 pub struct DeleteFolderParams {
     /// The folder's ID.
     pub folder_id: String,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::delete_template`]
@@ -646,6 +896,8 @@ pub struct DeleteTemplateParams {
     pub template_id: String,
     /// Delete only this published version (`1.2.0`) or the draft (`draft`, when no version has been published). Without it, the draft and every published version are deleted.
     pub version: Option<String>,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::delete_webhook`]
@@ -654,6 +906,8 @@ pub struct DeleteTemplateParams {
 pub struct DeleteWebhookParams {
     /// The webhook's ID.
     pub webhook_id: String,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::expire_combined_pdf`]
@@ -662,6 +916,8 @@ pub struct DeleteWebhookParams {
 pub struct ExpireCombinedPdfParams {
     /// The combined PDF's ID.
     pub combined_pdf_id: String,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::expire_submission`]
@@ -670,6 +926,8 @@ pub struct ExpireCombinedPdfParams {
 pub struct ExpireSubmissionParams {
     /// The submission's ID.
     pub submission_id: String,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::generate_submission_files`]
@@ -682,6 +940,8 @@ pub struct GenerateSubmissionFilesParams {
     pub body: models::GenerateSubmissionFilesRequest,
     /// Wait until the files have been generated before responding. Default true on sync.api hosts.
     pub wait: Option<bool>,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::generate_submission_preview`]
@@ -690,6 +950,16 @@ pub struct GenerateSubmissionFilesParams {
 pub struct GenerateSubmissionPreviewParams {
     /// The submission's ID.
     pub submission_id: String,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
+}
+
+/// struct for passing parameters to the method [`Api::get_account_email_action`]
+#[derive(Clone, Debug, ::bon::Builder)]
+#[builder(on(String, into), on(std::path::PathBuf, into))]
+pub struct GetAccountEmailActionParams {
+    /// The account email action's ID.
+    pub email_action_id: String,
 }
 
 /// struct for passing parameters to the method [`Api::get_combined_pdf`]
@@ -706,6 +976,24 @@ pub struct GetCombinedPdfParams {
 pub struct GetCustomFileParams {
     /// The custom file's ID.
     pub custom_file_id: String,
+}
+
+/// struct for passing parameters to the method [`Api::get_email_action`]
+#[derive(Clone, Debug, ::bon::Builder)]
+#[builder(on(String, into), on(std::path::PathBuf, into))]
+pub struct GetEmailActionParams {
+    /// The template's ID.
+    pub template_id: String,
+    /// The email action's ID.
+    pub email_action_id: String,
+}
+
+/// struct for passing parameters to the method [`Api::get_email_domain`]
+#[derive(Clone, Debug, ::bon::Builder)]
+#[builder(on(String, into), on(std::path::PathBuf, into))]
+pub struct GetEmailDomainParams {
+    /// The email domain's ID.
+    pub email_domain_id: String,
 }
 
 /// struct for passing parameters to the method [`Api::get_folder`]
@@ -748,7 +1036,7 @@ pub struct GetSubmissionBatchParams {
 pub struct GetTemplateParams {
     /// The template's ID.
     pub template_id: String,
-    /// A published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` or `draft`. Default `draft`.
+    /// A published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` (the newest published version, or the draft when none has been published) or `draft`. Default `draft`.
     pub version: Option<String>,
 }
 
@@ -758,7 +1046,7 @@ pub struct GetTemplateParams {
 pub struct GetTemplateDiffParams {
     /// The template's ID.
     pub template_id: String,
-    /// A published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` or `draft`. Default `draft`.
+    /// A published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` (the newest published version, or the draft when none has been published) or `draft`. Default `draft`.
     pub version: Option<String>,
 }
 
@@ -770,7 +1058,7 @@ pub struct GetTemplateModelCodeParams {
     pub template_id: String,
     /// The language to generate the code in.
     pub lang: models::ModelCodeLanguage,
-    /// The template version: a published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` or `draft`. Default `latest` (the draft when no version has been published), the version a submission uses by default.
+    /// The template version: a published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` (the newest published version, or the draft when none has been published) or `draft`. Default `latest`, the version a submission uses by default.
     pub version: Option<String>,
     /// Return only the types (interfaces, classes or structs), without the code that converts JSON to and from them. Default false. JavaScript has no types, PHP has no types-only code, and Rust's code is only types (serde converts the JSON), so theirs is the same either way.
     pub just_types: Option<bool>,
@@ -782,7 +1070,7 @@ pub struct GetTemplateModelCodeParams {
 pub struct GetTemplatePageImagesParams {
     /// The template's ID.
     pub template_id: String,
-    /// A published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` or `draft`. Default `draft`.
+    /// A published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` (the newest published version, or the draft when none has been published) or `draft`. Default `draft`.
     pub version: Option<String>,
 }
 
@@ -802,7 +1090,7 @@ pub struct GetTemplatePreviewParams {
 pub struct GetTemplateSchemaParams {
     /// The template's ID.
     pub template_id: String,
-    /// The template version: a published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` or `draft`. Default `latest` (the draft when no version has been published), the version a submission uses by default.
+    /// The template version: a published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` (the newest published version, or the draft when none has been published) or `draft`. Default `latest`, the version a submission uses by default.
     pub version: Option<String>,
 }
 
@@ -812,6 +1100,16 @@ pub struct GetTemplateSchemaParams {
 pub struct GetWebhookParams {
     /// The webhook's ID.
     pub webhook_id: String,
+}
+
+/// struct for passing parameters to the method [`Api::list_account_email_actions`]
+#[derive(Clone, Debug, ::bon::Builder)]
+#[builder(on(String, into), on(std::path::PathBuf, into))]
+pub struct ListAccountEmailActionsParams {
+    /// How many items to return (1-100, default 50).
+    pub limit: Option<i32>,
+    /// The previous page's `next_cursor`, to get the next page. It's the ID of that page's last item, so get the next page before you delete or change the items on this one.
+    pub cursor: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::list_combined_pdfs`]
@@ -828,6 +1126,28 @@ pub struct ListCombinedPdfsParams {
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
 pub struct ListCustomFilesParams {
+    /// How many items to return (1-100, default 50).
+    pub limit: Option<i32>,
+    /// The previous page's `next_cursor`, to get the next page. It's the ID of that page's last item, so get the next page before you delete or change the items on this one.
+    pub cursor: Option<String>,
+}
+
+/// struct for passing parameters to the method [`Api::list_email_actions`]
+#[derive(Clone, Debug, ::bon::Builder)]
+#[builder(on(String, into), on(std::path::PathBuf, into))]
+pub struct ListEmailActionsParams {
+    /// The template's ID.
+    pub template_id: String,
+    /// How many items to return (1-100, default 50).
+    pub limit: Option<i32>,
+    /// The previous page's `next_cursor`, to get the next page. It's the ID of that page's last item, so get the next page before you delete or change the items on this one.
+    pub cursor: Option<String>,
+}
+
+/// struct for passing parameters to the method [`Api::list_email_domains`]
+#[derive(Clone, Debug, ::bon::Builder)]
+#[builder(on(String, into), on(std::path::PathBuf, into))]
+pub struct ListEmailDomainsParams {
     /// How many items to return (1-100, default 50).
     pub limit: Option<i32>,
     /// The previous page's `next_cursor`, to get the next page. It's the ID of that page's last item, so get the next page before you delete or change the items on this one.
@@ -876,7 +1196,7 @@ pub struct ListSubmissionsParams {
 pub struct ListTemplateFieldsParams {
     /// The template's ID.
     pub template_id: String,
-    /// A published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` or `draft`. Default `draft`.
+    /// A published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` (the newest published version, or the draft when none has been published) or `draft`. Default `draft`.
     pub version: Option<String>,
 }
 
@@ -908,7 +1228,7 @@ pub struct ListTemplateSubmissionsParams {
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
 pub struct ListTemplatesParams {
-    /// Only list templates whose name contains this text (ignoring case).
+    /// Only list templates whose name contains this text (ignoring case). `%` and `_` match themselves.
     pub query: Option<String>,
     /// Only list the templates in this folder (not in its subfolders).
     pub parent_folder_id: Option<String>,
@@ -946,6 +1266,8 @@ pub struct MoveFolderParams {
     pub folder_id: String,
     /// Where to move the folder.
     pub body: models::MoveFolderRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::move_template`]
@@ -956,6 +1278,8 @@ pub struct MoveTemplateParams {
     pub template_id: String,
     /// Where to move the template.
     pub body: models::MoveTemplateRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::publish_template_version`]
@@ -966,6 +1290,8 @@ pub struct PublishTemplateVersionParams {
     pub template_id: String,
     /// The version to publish.
     pub body: models::PublishTemplateVersionRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::remove_template_fields`]
@@ -976,6 +1302,8 @@ pub struct RemoveTemplateFieldsParams {
     pub template_id: String,
     /// The fields to remove from the template's draft.
     pub body: models::RemoveTemplateFieldsRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::rename_folder`]
@@ -986,6 +1314,8 @@ pub struct RenameFolderParams {
     pub folder_id: String,
     /// The folder's new name.
     pub body: models::RenameFolderRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::reorder_template_fields`]
@@ -996,6 +1326,8 @@ pub struct ReorderTemplateFieldsParams {
     pub template_id: String,
     /// The new order of the fields in the template's draft.
     pub body: models::ReorderTemplateFieldsRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::restore_template_version`]
@@ -1006,6 +1338,72 @@ pub struct RestoreTemplateVersionParams {
     pub template_id: String,
     /// The version to restore.
     pub body: models::RestoreTemplateVersionRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
+}
+
+/// struct for passing parameters to the method [`Api::send_account_email_action_test_email`]
+#[derive(Clone, Debug, ::bon::Builder)]
+#[builder(on(String, into), on(std::path::PathBuf, into))]
+pub struct SendAccountEmailActionTestEmailParams {
+    /// The account email action's ID.
+    pub email_action_id: String,
+    /// Which template the test email is for.
+    pub body: Option<models::SendAccountEmailActionTestEmailRequest>,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
+}
+
+/// struct for passing parameters to the method [`Api::send_email_action_test_email`]
+#[derive(Clone, Debug, ::bon::Builder)]
+#[builder(on(String, into), on(std::path::PathBuf, into))]
+pub struct SendEmailActionTestEmailParams {
+    /// The template's ID.
+    pub template_id: String,
+    /// The email action's ID.
+    pub email_action_id: String,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
+}
+
+/// struct for passing parameters to the method [`Api::update_account_email_action`]
+#[derive(Clone, Debug, ::bon::Builder)]
+#[builder(on(String, into), on(std::path::PathBuf, into))]
+pub struct UpdateAccountEmailActionParams {
+    /// The account email action's ID.
+    pub email_action_id: String,
+    /// The settings to change. Properties left out keep their values.
+    pub body: models::UpdateAccountEmailActionRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
+}
+
+/// struct for passing parameters to the method [`Api::update_email_action`]
+#[derive(Clone, Debug, ::bon::Builder)]
+#[builder(on(String, into), on(std::path::PathBuf, into))]
+pub struct UpdateEmailActionParams {
+    /// The template's ID.
+    pub template_id: String,
+    /// The email action's ID.
+    pub email_action_id: String,
+    /// The settings to change. Properties left out keep their values.
+    pub body: models::UpdateEmailActionRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
+}
+
+/// struct for passing parameters to the method [`Api::update_email_action_customization`]
+#[derive(Clone, Debug, ::bon::Builder)]
+#[builder(on(String, into), on(std::path::PathBuf, into))]
+pub struct UpdateEmailActionCustomizationParams {
+    /// The template's ID.
+    pub template_id: String,
+    /// The ID of one of your account's email actions that sends for the template.
+    pub email_action_id: String,
+    /// The template's changes to the account email action, replacing any it had. Each setting you send is changed for this template, and the ones you leave out follow the account email action. `enabled: false` stops it sending for this template; left out, it sends.
+    pub body: models::UpdateEmailActionCustomizationRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::update_signature_request`]
@@ -1016,6 +1414,8 @@ pub struct UpdateSignatureRequestParams {
     pub signature_request_id: String,
     /// The settings to change. Properties left out keep their values.
     pub body: models::UpdateSignatureRequestRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::update_template`]
@@ -1026,6 +1426,8 @@ pub struct UpdateTemplateParams {
     pub template_id: String,
     /// The settings to change. Properties left out keep their values.
     pub body: models::UpdateTemplateRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::update_template_document`]
@@ -1038,6 +1440,8 @@ pub struct UpdateTemplateDocumentParams {
     pub body: models::UpdateTemplateDocumentRequest,
     /// Wait until the PDF has been processed, a `document_url`'s PDF or Word document downloaded, and an OpenDocument file converted, before responding. Default true on sync.api hosts.
     pub wait: Option<bool>,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::update_template_fields`]
@@ -1048,6 +1452,8 @@ pub struct UpdateTemplateFieldsParams {
     pub template_id: String,
     /// The fields to change in the template's draft.
     pub body: models::UpdateTemplateFieldsRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::update_webhook`]
@@ -1058,6 +1464,8 @@ pub struct UpdateWebhookParams {
     pub webhook_id: String,
     /// The settings to change. Properties left out keep their values.
     pub body: models::UpdateWebhookRequest,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::upload_template`]
@@ -1086,6 +1494,8 @@ pub struct UploadTemplateParams {
     pub field_logic: Option<models::FieldSetupLogic>,
     /// What each submission of a Word template makes unless its request sets `output_formats`: `docx` (a Word document), `odt` (an OpenDocument file, converted from the Word document) or `pdf`. Required when `document` is a Word document.
     pub output_format: Option<models::OutputFormat>,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::upload_template_document`]
@@ -1100,6 +1510,8 @@ pub struct UploadTemplateDocumentParams {
     pub wait: Option<bool>,
     /// Replace all of the template's fields with the fillable fields in the new PDF, once DocSpring has processed it (`document.field_reimport_state`). As on a first upload, the default typeface, font size, bold and color are taken from the PDF's fields; the template's other settings are kept. If the PDF has no fillable fields, the template keeps its fields. A locked template can't re-import its fields. Only for PDF templates: a Word template adds a field for each new tag.
     pub reimport_fields: Option<bool>,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::validate_submission`]
@@ -1110,18 +1522,34 @@ pub struct ValidateSubmissionParams {
     pub template_id: String,
     /// The submission's data and settings.
     pub body: models::ValidateSubmissionRequest,
-    /// The template version to use: a published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` or `draft`. Default `latest` (the draft when no version has been published).
+    /// The template version to use: a published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` (the newest published version, or the draft when none has been published) or `draft`. Default `latest`.
     pub version: Option<String>,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
+}
+
+/// struct for passing parameters to the method [`Api::verify_email_domain`]
+#[derive(Clone, Debug, ::bon::Builder)]
+#[builder(on(String, into), on(std::path::PathBuf, into))]
+pub struct VerifyEmailDomainParams {
+    /// The email domain's ID.
+    pub email_domain_id: String,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    pub idempotency_key: Option<String>,
 }
 
 #[async_trait]
 impl Api for Client {
-    /// Adds fields to a template's draft and returns all of its fields. Publish a version for submissions of published versions to have them.
+    /// Adds fields to a template's draft and returns all of its fields. Publish a version for submissions of published versions to have them. A field with the name of one of the template's fields shares its settings (`type`, `required`, `default`, ...), so a field that sets one to another value is refused: PUT /templates/{template_id}/fields changes them for every field with the name.
     async fn add_template_fields(
         &self,
         params: AddTemplateFieldsParams,
     ) -> Result<models::TemplateFields, Error<AddTemplateFieldsError>> {
-        let AddTemplateFieldsParams { template_id, body } = params;
+        let AddTemplateFieldsParams {
+            template_id,
+            body,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -1138,6 +1566,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -1211,7 +1643,11 @@ impl Api for Client {
         &self,
         params: CopyTemplateParams,
     ) -> Result<models::Template, Error<CopyTemplateError>> {
-        let CopyTemplateParams { template_id, body } = params;
+        let CopyTemplateParams {
+            template_id,
+            body,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -1228,6 +1664,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -1288,6 +1728,97 @@ impl Api for Client {
                     .ok()
                     .map(CopyTemplateError::UnknownValue),
             };
+            let local_var_error = ResponseContent {
+                status: local_var_status,
+                headers: local_var_headers,
+                content: local_var_content,
+                entity: local_var_entity,
+            };
+            Err(Error::ResponseError(local_var_error))
+        }
+    }
+
+    /// Adds an email action to your account. It sends for every template, or only for the templates in `template_ids` and the templates in the folders in `folder_ids` (and the folders inside them). Each template can turn it off or change its settings for that template only (`PUT /templates/{template_id}/email_actions/{email_action_id}/customization`). Without a paid plan (Starter or higher), email actions only email your team: test submissions' emails go to your account's users, and live submissions' emails aren't sent.
+    async fn create_account_email_action(
+        &self,
+        params: CreateAccountEmailActionParams,
+    ) -> Result<models::EmailAction, Error<CreateAccountEmailActionError>> {
+        let CreateAccountEmailActionParams {
+            body,
+            idempotency_key,
+        } = params;
+
+        let local_var_configuration = &self.configuration;
+
+        let local_var_client = &local_var_configuration.client;
+
+        let local_var_uri_str = format!("{}/email_actions", local_var_configuration.base_path);
+        let mut local_var_req_builder =
+            local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+        if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+            local_var_req_builder = local_var_req_builder
+                .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
+        }
+        if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
+            local_var_req_builder = local_var_req_builder.basic_auth(
+                local_var_auth_conf.0.to_owned(),
+                local_var_auth_conf.1.to_owned(),
+            );
+        };
+        local_var_req_builder = local_var_req_builder.json(&body);
+
+        let local_var_req = local_var_req_builder.build()?;
+        crate::request_validator::check_request(
+            local_var_configuration,
+            "createAccountEmailAction",
+            &local_var_req,
+            None,
+        )?;
+        let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+        let local_var_status = local_var_resp.status();
+        let local_var_content_type = local_var_resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream");
+        let local_var_content_type = super::ContentType::from(local_var_content_type);
+        let local_var_headers = local_var_resp.headers().clone();
+        let local_var_content = local_var_resp.text().await?;
+
+        if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+            match local_var_content_type {
+                ContentType::Json => serde_json::from_str(&local_var_content).map_err(Error::from),
+                ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailAction`"))),
+                ContentType::Unsupported(local_var_unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{local_var_unknown_type}` content type response that cannot be converted to `models::EmailAction`")))),
+            }
+        } else {
+            // The error enum is untagged, so decoding the body alone would pick the first variant its shape fits:
+            // the response's status picks the variant instead. Exact codes come before ranges (4XX), which match
+            // what's left of theirs, and a response without a body gives its variant without decoding one.
+            let local_var_entity: Option<CreateAccountEmailActionError> =
+                match local_var_status.as_u16() {
+                    422 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(CreateAccountEmailActionError::Status422),
+                    403 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(CreateAccountEmailActionError::Status403),
+                    401 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(CreateAccountEmailActionError::Status401),
+                    429 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(CreateAccountEmailActionError::Status429),
+                    _ => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(CreateAccountEmailActionError::UnknownValue),
+                };
             let local_var_error = ResponseContent {
                 status: local_var_status,
                 headers: local_var_headers,
@@ -1407,7 +1938,10 @@ impl Api for Client {
         &self,
         params: CreateCustomFileFromUploadParams,
     ) -> Result<models::CustomFile, Error<CreateCustomFileFromUploadError>> {
-        let CreateCustomFileFromUploadParams { body } = params;
+        let CreateCustomFileFromUploadParams {
+            body,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -1420,6 +1954,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -1483,12 +2021,203 @@ impl Api for Client {
         }
     }
 
+    /// Adds an email action to a template's draft. From then on, each processed submission emails its PDF to the recipients in `to`, `cc` and `bcc`: addresses, and tags for the address in one of the submission's fields (`{{ data.tenant_email }}`) or in its metadata (`{{ metadata.agent_email }}`). With `send_when`, only the submissions whose values meet its conditions send one. Without a paid plan (Starter or higher), email actions only email your team: test submissions' emails go to your account's users, and live submissions' emails aren't sent.
+    async fn create_email_action(
+        &self,
+        params: CreateEmailActionParams,
+    ) -> Result<models::EmailAction, Error<CreateEmailActionError>> {
+        let CreateEmailActionParams {
+            template_id,
+            body,
+            idempotency_key,
+        } = params;
+
+        let local_var_configuration = &self.configuration;
+
+        let local_var_client = &local_var_configuration.client;
+
+        let local_var_uri_str = format!(
+            "{}/templates/{template_id}/email_actions",
+            local_var_configuration.base_path,
+            template_id = crate::apis::urlencode(template_id)
+        );
+        let mut local_var_req_builder =
+            local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+        if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+            local_var_req_builder = local_var_req_builder
+                .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
+        }
+        if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
+            local_var_req_builder = local_var_req_builder.basic_auth(
+                local_var_auth_conf.0.to_owned(),
+                local_var_auth_conf.1.to_owned(),
+            );
+        };
+        local_var_req_builder = local_var_req_builder.json(&body);
+
+        let local_var_req = local_var_req_builder.build()?;
+        crate::request_validator::check_request(
+            local_var_configuration,
+            "createEmailAction",
+            &local_var_req,
+            None,
+        )?;
+        let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+        let local_var_status = local_var_resp.status();
+        let local_var_content_type = local_var_resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream");
+        let local_var_content_type = super::ContentType::from(local_var_content_type);
+        let local_var_headers = local_var_resp.headers().clone();
+        let local_var_content = local_var_resp.text().await?;
+
+        if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+            match local_var_content_type {
+                ContentType::Json => serde_json::from_str(&local_var_content).map_err(Error::from),
+                ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailAction`"))),
+                ContentType::Unsupported(local_var_unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{local_var_unknown_type}` content type response that cannot be converted to `models::EmailAction`")))),
+            }
+        } else {
+            // The error enum is untagged, so decoding the body alone would pick the first variant its shape fits:
+            // the response's status picks the variant instead. Exact codes come before ranges (4XX), which match
+            // what's left of theirs, and a response without a body gives its variant without decoding one.
+            let local_var_entity: Option<CreateEmailActionError> = match local_var_status.as_u16() {
+                422 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(CreateEmailActionError::Status422),
+                403 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(CreateEmailActionError::Status403),
+                409 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(CreateEmailActionError::Status409),
+                401 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(CreateEmailActionError::Status401),
+                429 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(CreateEmailActionError::Status429),
+                _ => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(CreateEmailActionError::UnknownValue),
+            };
+            let local_var_error = ResponseContent {
+                status: local_var_status,
+                headers: local_var_headers,
+                content: local_var_content,
+                entity: local_var_entity,
+            };
+            Err(Error::ResponseError(local_var_error))
+        }
+    }
+
+    /// Adds a domain for email actions to send from, and returns the DNS records to add to it. DocSpring checks for them every few minutes, and the domain is verified once its DKIM and DMARC records are found. Needs a paid monthly plan.
+    async fn create_email_domain(
+        &self,
+        params: CreateEmailDomainParams,
+    ) -> Result<models::EmailDomain, Error<CreateEmailDomainError>> {
+        let CreateEmailDomainParams {
+            body,
+            idempotency_key,
+        } = params;
+
+        let local_var_configuration = &self.configuration;
+
+        let local_var_client = &local_var_configuration.client;
+
+        let local_var_uri_str = format!("{}/email_domains", local_var_configuration.base_path);
+        let mut local_var_req_builder =
+            local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+        if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+            local_var_req_builder = local_var_req_builder
+                .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
+        }
+        if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
+            local_var_req_builder = local_var_req_builder.basic_auth(
+                local_var_auth_conf.0.to_owned(),
+                local_var_auth_conf.1.to_owned(),
+            );
+        };
+        local_var_req_builder = local_var_req_builder.json(&body);
+
+        let local_var_req = local_var_req_builder.build()?;
+        crate::request_validator::check_request(
+            local_var_configuration,
+            "createEmailDomain",
+            &local_var_req,
+            None,
+        )?;
+        let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+        let local_var_status = local_var_resp.status();
+        let local_var_content_type = local_var_resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream");
+        let local_var_content_type = super::ContentType::from(local_var_content_type);
+        let local_var_headers = local_var_resp.headers().clone();
+        let local_var_content = local_var_resp.text().await?;
+
+        if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+            match local_var_content_type {
+                ContentType::Json => serde_json::from_str(&local_var_content).map_err(Error::from),
+                ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailDomain`"))),
+                ContentType::Unsupported(local_var_unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{local_var_unknown_type}` content type response that cannot be converted to `models::EmailDomain`")))),
+            }
+        } else {
+            // The error enum is untagged, so decoding the body alone would pick the first variant its shape fits:
+            // the response's status picks the variant instead. Exact codes come before ranges (4XX), which match
+            // what's left of theirs, and a response without a body gives its variant without decoding one.
+            let local_var_entity: Option<CreateEmailDomainError> = match local_var_status.as_u16() {
+                422 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(CreateEmailDomainError::Status422),
+                403 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(CreateEmailDomainError::Status403),
+                401 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(CreateEmailDomainError::Status401),
+                429 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(CreateEmailDomainError::Status429),
+                _ => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(CreateEmailDomainError::UnknownValue),
+            };
+            let local_var_error = ResponseContent {
+                status: local_var_status,
+                headers: local_var_headers,
+                content: local_var_content,
+                entity: local_var_entity,
+            };
+            Err(Error::ResponseError(local_var_error))
+        }
+    }
+
     /// Creates a folder for organizing templates. Pass `parent_folder_id` to create it inside another folder. Folder names are unique within their parent folder.
     async fn create_folder(
         &self,
         params: CreateFolderParams,
     ) -> Result<models::Folder, Error<CreateFolderError>> {
-        let CreateFolderParams { body } = params;
+        let CreateFolderParams {
+            body,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -1501,6 +2230,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -1571,6 +2304,7 @@ impl Api for Client {
         let CreateSignatureRequestEventParams {
             signature_request_id,
             body,
+            idempotency_key,
         } = params;
 
         let local_var_configuration = &self.configuration;
@@ -1588,6 +2322,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -1668,6 +2406,7 @@ impl Api for Client {
         let CreateSignatureRequestTokenParams {
             signature_request_id,
             body,
+            idempotency_key,
         } = params;
 
         let local_var_configuration = &self.configuration;
@@ -1685,6 +2424,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -1759,7 +2502,7 @@ impl Api for Client {
         }
     }
 
-    /// Creates a submission: fills in a template with your data and generates a PDF. The PDF is generated in the background: on sync.api hosts the request waits for it (unless you pass `wait=false`), otherwise poll GET /submissions/{submission_id} until `state` isn't `pending`.  Data that doesn't match the template's fields returns a 422 with an `invalid_data` error. The submission is still saved, with its errors, so you can find it in DocSpring: the error's `submission_id` is its ID.
+    /// Creates a submission: fills in a template with your data and generates a PDF. The PDF is generated in the background: on sync.api hosts the request waits for it (unless you pass `wait=false`), otherwise poll GET /submissions/{submission_id} until `state` isn't `pending`.  Data that doesn't match the template's fields returns a 422 with an `invalid_data` error. The submission is still saved, with its errors, so you can find it in DocSpring: the error's `submission_id` is its ID.  With `signature_requests`, the PDF is generated once everyone has signed. DocSpring emails each signer a link to sign, unless `send_email` is false, and can send reminders and the completed document.
     async fn create_submission(
         &self,
         params: CreateSubmissionParams,
@@ -1982,12 +2725,16 @@ impl Api for Client {
         }
     }
 
-    /// Creates an HTML template, or a PDF or Word template from a file you uploaded with the presigned upload (GET /uploads/presign): pass its `fields.key` as `cache_id`. You can send a link to the file (`document_url`) or the file in base64 (`document_base64`) instead, or send the file with the request with POST /templates/upload. A Word template is made from a Word document (.docx) or an OpenDocument text file (.odt), which DocSpring converts to a Word document. It needs its `output_format`: what each submission makes, a Word document (`docx`), an OpenDocument file (`odt`) or a PDF.  A PDF template is ready to generate PDFs once DocSpring has processed its PDF, a template created from a `document_url` once its document has been downloaded, and one created from an .odt once it has been converted (`ready` is true). On sync.api hosts the request waits for that unless you pass `wait=false`.
+    /// Creates an HTML template, or a PDF or Word template from a file you uploaded with the presigned upload (GET /uploads/presign): pass its `fields.key` as `cache_id`. You can send a link to the file (`document_url`) or the file in base64 (`document_base64`) instead, or send the file with the request with POST /templates/upload. A Word template is made from a Word document (.docx) or an OpenDocument text file (.odt), which DocSpring converts to a Word document. It needs its `output_format`: what each submission makes, a Word document (`docx`), an OpenDocument file (`odt`) or a PDF. A page design (`page_designer`) takes its `layout` in the Page Designer layout format, or starts with an empty page without one.  A PDF template is ready to generate PDFs once DocSpring has processed its PDF, a template created from a `document_url` once its document has been downloaded, and one created from an .odt once it has been converted (`ready` is true). On sync.api hosts the request waits for that unless you pass `wait=false`.
     async fn create_template(
         &self,
         params: CreateTemplateParams,
     ) -> Result<models::Template, Error<CreateTemplateError>> {
-        let CreateTemplateParams { body, wait } = params;
+        let CreateTemplateParams {
+            body,
+            wait,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -2004,6 +2751,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -2072,7 +2823,7 @@ impl Api for Client {
         }
     }
 
-    /// Makes PNG images of a template's pages filled in with the data you send (not a PDF), so you can check how an HTML, PDF or Word template prints with your data before you publish a version or send live data. A Word template's pages are its PDF's, whatever its `output_format`. It renders the template's draft, or the published `version` you ask for. A preview makes no submission and uses no credits, and its pages are watermarked like a test submission's PDF. It's `pending` while it renders: get it with GET /templates/{template_id}/previews/{preview_id} until it's `processed`, with an image of each page, or `error`.
+    /// Makes PNG images of a template's pages filled in with the data you send (not a PDF), so you can check how an HTML, PDF or Word template or a page design prints with your data before you publish a version or send live data. A Word template's pages are its PDF's, whatever its `output_format`. It renders the template's draft, or the published `version` you ask for. A preview makes no submission and uses no credits, and its pages are watermarked like a test submission's PDF. It's `pending` while it renders: get it with GET /templates/{template_id}/previews/{preview_id} until it's `processed`, with an image of each page, or `error`.
     async fn create_template_preview(
         &self,
         params: CreateTemplatePreviewParams,
@@ -2081,6 +2832,7 @@ impl Api for Client {
             template_id,
             body,
             version,
+            idempotency_key,
         } = params;
 
         let local_var_configuration = &self.configuration;
@@ -2102,6 +2854,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -2170,7 +2926,10 @@ impl Api for Client {
         &self,
         params: CreateWebhookParams,
     ) -> Result<models::Webhook, Error<CreateWebhookError>> {
-        let CreateWebhookParams { body } = params;
+        let CreateWebhookParams {
+            body,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -2183,6 +2942,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -2248,12 +3011,103 @@ impl Api for Client {
         }
     }
 
+    /// Deletes one of your account's email actions, with every template's customization of it. Emails it has already queued for submissions aren't sent. Submissions keep the record of the emails it sent.
+    async fn delete_account_email_action(
+        &self,
+        params: DeleteAccountEmailActionParams,
+    ) -> Result<models::EmailAction, Error<DeleteAccountEmailActionError>> {
+        let DeleteAccountEmailActionParams {
+            email_action_id,
+            idempotency_key,
+        } = params;
+
+        let local_var_configuration = &self.configuration;
+
+        let local_var_client = &local_var_configuration.client;
+
+        let local_var_uri_str = format!(
+            "{}/email_actions/{email_action_id}",
+            local_var_configuration.base_path,
+            email_action_id = crate::apis::urlencode(email_action_id)
+        );
+        let mut local_var_req_builder =
+            local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
+
+        if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+            local_var_req_builder = local_var_req_builder
+                .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
+        }
+        if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
+            local_var_req_builder = local_var_req_builder.basic_auth(
+                local_var_auth_conf.0.to_owned(),
+                local_var_auth_conf.1.to_owned(),
+            );
+        };
+
+        let local_var_req = local_var_req_builder.build()?;
+        crate::request_validator::check_request(
+            local_var_configuration,
+            "deleteAccountEmailAction",
+            &local_var_req,
+            None,
+        )?;
+        let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+        let local_var_status = local_var_resp.status();
+        let local_var_content_type = local_var_resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream");
+        let local_var_content_type = super::ContentType::from(local_var_content_type);
+        let local_var_headers = local_var_resp.headers().clone();
+        let local_var_content = local_var_resp.text().await?;
+
+        if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+            match local_var_content_type {
+                ContentType::Json => serde_json::from_str(&local_var_content).map_err(Error::from),
+                ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailAction`"))),
+                ContentType::Unsupported(local_var_unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{local_var_unknown_type}` content type response that cannot be converted to `models::EmailAction`")))),
+            }
+        } else {
+            // The error enum is untagged, so decoding the body alone would pick the first variant its shape fits:
+            // the response's status picks the variant instead. Exact codes come before ranges (4XX), which match
+            // what's left of theirs, and a response without a body gives its variant without decoding one.
+            let local_var_entity: Option<DeleteAccountEmailActionError> =
+                match local_var_status.as_u16() {
+                    401 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(DeleteAccountEmailActionError::Status401),
+                    429 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(DeleteAccountEmailActionError::Status429),
+                    _ => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(DeleteAccountEmailActionError::UnknownValue),
+                };
+            let local_var_error = ResponseContent {
+                status: local_var_status,
+                headers: local_var_headers,
+                content: local_var_content,
+                entity: local_var_entity,
+            };
+            Err(Error::ResponseError(local_var_error))
+        }
+    }
+
     /// Deletes a custom file and returns it. Use a live API token: test tokens can't delete custom files.
     async fn delete_custom_file(
         &self,
         params: DeleteCustomFileParams,
     ) -> Result<models::CustomFile, Error<DeleteCustomFileError>> {
-        let DeleteCustomFileParams { custom_file_id } = params;
+        let DeleteCustomFileParams {
+            custom_file_id,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -2270,6 +3124,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -2334,12 +3192,287 @@ impl Api for Client {
         }
     }
 
+    /// Deletes an email action. Emails it has already queued for submissions aren't sent. Submissions keep the record of the emails it sent.
+    async fn delete_email_action(
+        &self,
+        params: DeleteEmailActionParams,
+    ) -> Result<models::EmailAction, Error<DeleteEmailActionError>> {
+        let DeleteEmailActionParams {
+            template_id,
+            email_action_id,
+            idempotency_key,
+        } = params;
+
+        let local_var_configuration = &self.configuration;
+
+        let local_var_client = &local_var_configuration.client;
+
+        let local_var_uri_str = format!(
+            "{}/templates/{template_id}/email_actions/{email_action_id}",
+            local_var_configuration.base_path,
+            template_id = crate::apis::urlencode(template_id),
+            email_action_id = crate::apis::urlencode(email_action_id)
+        );
+        let mut local_var_req_builder =
+            local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
+
+        if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+            local_var_req_builder = local_var_req_builder
+                .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
+        }
+        if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
+            local_var_req_builder = local_var_req_builder.basic_auth(
+                local_var_auth_conf.0.to_owned(),
+                local_var_auth_conf.1.to_owned(),
+            );
+        };
+
+        let local_var_req = local_var_req_builder.build()?;
+        crate::request_validator::check_request(
+            local_var_configuration,
+            "deleteEmailAction",
+            &local_var_req,
+            None,
+        )?;
+        let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+        let local_var_status = local_var_resp.status();
+        let local_var_content_type = local_var_resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream");
+        let local_var_content_type = super::ContentType::from(local_var_content_type);
+        let local_var_headers = local_var_resp.headers().clone();
+        let local_var_content = local_var_resp.text().await?;
+
+        if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+            match local_var_content_type {
+                ContentType::Json => serde_json::from_str(&local_var_content).map_err(Error::from),
+                ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailAction`"))),
+                ContentType::Unsupported(local_var_unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{local_var_unknown_type}` content type response that cannot be converted to `models::EmailAction`")))),
+            }
+        } else {
+            // The error enum is untagged, so decoding the body alone would pick the first variant its shape fits:
+            // the response's status picks the variant instead. Exact codes come before ranges (4XX), which match
+            // what's left of theirs, and a response without a body gives its variant without decoding one.
+            let local_var_entity: Option<DeleteEmailActionError> = match local_var_status.as_u16() {
+                409 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(DeleteEmailActionError::Status409),
+                401 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(DeleteEmailActionError::Status401),
+                429 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(DeleteEmailActionError::Status429),
+                _ => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(DeleteEmailActionError::UnknownValue),
+            };
+            let local_var_error = ResponseContent {
+                status: local_var_status,
+                headers: local_var_headers,
+                content: local_var_content,
+                entity: local_var_entity,
+            };
+            Err(Error::ResponseError(local_var_error))
+        }
+    }
+
+    /// Removes the template's changes to one of your account's email actions: it sends for this template as it is, and again if the template had turned it off.
+    async fn delete_email_action_customization(
+        &self,
+        params: DeleteEmailActionCustomizationParams,
+    ) -> Result<models::EmailAction, Error<DeleteEmailActionCustomizationError>> {
+        let DeleteEmailActionCustomizationParams {
+            template_id,
+            email_action_id,
+            idempotency_key,
+        } = params;
+
+        let local_var_configuration = &self.configuration;
+
+        let local_var_client = &local_var_configuration.client;
+
+        let local_var_uri_str = format!(
+            "{}/templates/{template_id}/email_actions/{email_action_id}/customization",
+            local_var_configuration.base_path,
+            template_id = crate::apis::urlencode(template_id),
+            email_action_id = crate::apis::urlencode(email_action_id)
+        );
+        let mut local_var_req_builder =
+            local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
+
+        if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+            local_var_req_builder = local_var_req_builder
+                .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
+        }
+        if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
+            local_var_req_builder = local_var_req_builder.basic_auth(
+                local_var_auth_conf.0.to_owned(),
+                local_var_auth_conf.1.to_owned(),
+            );
+        };
+
+        let local_var_req = local_var_req_builder.build()?;
+        crate::request_validator::check_request(
+            local_var_configuration,
+            "deleteEmailActionCustomization",
+            &local_var_req,
+            None,
+        )?;
+        let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+        let local_var_status = local_var_resp.status();
+        let local_var_content_type = local_var_resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream");
+        let local_var_content_type = super::ContentType::from(local_var_content_type);
+        let local_var_headers = local_var_resp.headers().clone();
+        let local_var_content = local_var_resp.text().await?;
+
+        if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+            match local_var_content_type {
+                ContentType::Json => serde_json::from_str(&local_var_content).map_err(Error::from),
+                ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailAction`"))),
+                ContentType::Unsupported(local_var_unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{local_var_unknown_type}` content type response that cannot be converted to `models::EmailAction`")))),
+            }
+        } else {
+            // The error enum is untagged, so decoding the body alone would pick the first variant its shape fits:
+            // the response's status picks the variant instead. Exact codes come before ranges (4XX), which match
+            // what's left of theirs, and a response without a body gives its variant without decoding one.
+            let local_var_entity: Option<DeleteEmailActionCustomizationError> =
+                match local_var_status.as_u16() {
+                    409 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(DeleteEmailActionCustomizationError::Status409),
+                    401 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(DeleteEmailActionCustomizationError::Status401),
+                    429 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(DeleteEmailActionCustomizationError::Status429),
+                    _ => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(DeleteEmailActionCustomizationError::UnknownValue),
+                };
+            let local_var_error = ResponseContent {
+                status: local_var_status,
+                headers: local_var_headers,
+                content: local_var_content,
+                entity: local_var_entity,
+            };
+            Err(Error::ResponseError(local_var_error))
+        }
+    }
+
+    /// Removes an email domain. Email actions that send from an address at it fail until you add and verify it again, or change their `from_address`. You can then remove its DNS records.
+    async fn delete_email_domain(
+        &self,
+        params: DeleteEmailDomainParams,
+    ) -> Result<models::EmailDomain, Error<DeleteEmailDomainError>> {
+        let DeleteEmailDomainParams {
+            email_domain_id,
+            idempotency_key,
+        } = params;
+
+        let local_var_configuration = &self.configuration;
+
+        let local_var_client = &local_var_configuration.client;
+
+        let local_var_uri_str = format!(
+            "{}/email_domains/{email_domain_id}",
+            local_var_configuration.base_path,
+            email_domain_id = crate::apis::urlencode(email_domain_id)
+        );
+        let mut local_var_req_builder =
+            local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
+
+        if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+            local_var_req_builder = local_var_req_builder
+                .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
+        }
+        if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
+            local_var_req_builder = local_var_req_builder.basic_auth(
+                local_var_auth_conf.0.to_owned(),
+                local_var_auth_conf.1.to_owned(),
+            );
+        };
+
+        let local_var_req = local_var_req_builder.build()?;
+        crate::request_validator::check_request(
+            local_var_configuration,
+            "deleteEmailDomain",
+            &local_var_req,
+            None,
+        )?;
+        let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+        let local_var_status = local_var_resp.status();
+        let local_var_content_type = local_var_resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream");
+        let local_var_content_type = super::ContentType::from(local_var_content_type);
+        let local_var_headers = local_var_resp.headers().clone();
+        let local_var_content = local_var_resp.text().await?;
+
+        if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+            match local_var_content_type {
+                ContentType::Json => serde_json::from_str(&local_var_content).map_err(Error::from),
+                ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailDomain`"))),
+                ContentType::Unsupported(local_var_unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{local_var_unknown_type}` content type response that cannot be converted to `models::EmailDomain`")))),
+            }
+        } else {
+            // The error enum is untagged, so decoding the body alone would pick the first variant its shape fits:
+            // the response's status picks the variant instead. Exact codes come before ranges (4XX), which match
+            // what's left of theirs, and a response without a body gives its variant without decoding one.
+            let local_var_entity: Option<DeleteEmailDomainError> = match local_var_status.as_u16() {
+                401 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(DeleteEmailDomainError::Status401),
+                429 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(DeleteEmailDomainError::Status429),
+                _ => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(DeleteEmailDomainError::UnknownValue),
+            };
+            let local_var_error = ResponseContent {
+                status: local_var_status,
+                headers: local_var_headers,
+                content: local_var_content,
+                entity: local_var_entity,
+            };
+            Err(Error::ResponseError(local_var_error))
+        }
+    }
+
     /// Deletes an empty folder and returns it. A folder that still has templates or folders in it can't be deleted.
     async fn delete_folder(
         &self,
         params: DeleteFolderParams,
     ) -> Result<models::Folder, Error<DeleteFolderError>> {
-        let DeleteFolderParams { folder_id } = params;
+        let DeleteFolderParams {
+            folder_id,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -2356,6 +3489,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -2428,6 +3565,7 @@ impl Api for Client {
         let DeleteTemplateParams {
             template_id,
             version,
+            idempotency_key,
         } = params;
 
         let local_var_configuration = &self.configuration;
@@ -2449,6 +3587,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -2521,7 +3663,10 @@ impl Api for Client {
         &self,
         params: DeleteWebhookParams,
     ) -> Result<models::Webhook, Error<DeleteWebhookError>> {
-        let DeleteWebhookParams { webhook_id } = params;
+        let DeleteWebhookParams {
+            webhook_id,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -2538,6 +3683,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -2604,7 +3753,10 @@ impl Api for Client {
         &self,
         params: ExpireCombinedPdfParams,
     ) -> Result<models::CombinedPdf, Error<ExpireCombinedPdfError>> {
-        let ExpireCombinedPdfParams { combined_pdf_id } = params;
+        let ExpireCombinedPdfParams {
+            combined_pdf_id,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -2621,6 +3773,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -2690,7 +3846,10 @@ impl Api for Client {
         &self,
         params: ExpireSubmissionParams,
     ) -> Result<models::Submission, Error<ExpireSubmissionError>> {
-        let ExpireSubmissionParams { submission_id } = params;
+        let ExpireSubmissionParams {
+            submission_id,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -2707,6 +3866,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -2780,6 +3943,7 @@ impl Api for Client {
             submission_id,
             body,
             wait,
+            idempotency_key,
         } = params;
 
         let local_var_configuration = &self.configuration;
@@ -2801,6 +3965,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -2878,7 +4046,10 @@ impl Api for Client {
         &self,
         params: GenerateSubmissionPreviewParams,
     ) -> Result<models::Submission, Error<GenerateSubmissionPreviewError>> {
-        let GenerateSubmissionPreviewParams { submission_id } = params;
+        let GenerateSubmissionPreviewParams {
+            submission_id,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -2895,6 +4066,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -2949,6 +4124,90 @@ impl Api for Client {
                     _ => serde_json::from_str(&local_var_content)
                         .ok()
                         .map(GenerateSubmissionPreviewError::UnknownValue),
+                };
+            let local_var_error = ResponseContent {
+                status: local_var_status,
+                headers: local_var_headers,
+                content: local_var_content,
+                entity: local_var_entity,
+            };
+            Err(Error::ResponseError(local_var_error))
+        }
+    }
+
+    /// Returns one of your account's email actions, with its settings and whether its emails are failing.
+    async fn get_account_email_action(
+        &self,
+        params: GetAccountEmailActionParams,
+    ) -> Result<models::EmailAction, Error<GetAccountEmailActionError>> {
+        let GetAccountEmailActionParams { email_action_id } = params;
+
+        let local_var_configuration = &self.configuration;
+
+        let local_var_client = &local_var_configuration.client;
+
+        let local_var_uri_str = format!(
+            "{}/email_actions/{email_action_id}",
+            local_var_configuration.base_path,
+            email_action_id = crate::apis::urlencode(email_action_id)
+        );
+        let mut local_var_req_builder =
+            local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+        if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+            local_var_req_builder = local_var_req_builder
+                .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
+            local_var_req_builder = local_var_req_builder.basic_auth(
+                local_var_auth_conf.0.to_owned(),
+                local_var_auth_conf.1.to_owned(),
+            );
+        };
+
+        let local_var_req = local_var_req_builder.build()?;
+        crate::request_validator::check_request(
+            local_var_configuration,
+            "getAccountEmailAction",
+            &local_var_req,
+            None,
+        )?;
+        let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+        let local_var_status = local_var_resp.status();
+        let local_var_content_type = local_var_resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream");
+        let local_var_content_type = super::ContentType::from(local_var_content_type);
+        let local_var_headers = local_var_resp.headers().clone();
+        let local_var_content = local_var_resp.text().await?;
+
+        if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+            match local_var_content_type {
+                ContentType::Json => serde_json::from_str(&local_var_content).map_err(Error::from),
+                ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailAction`"))),
+                ContentType::Unsupported(local_var_unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{local_var_unknown_type}` content type response that cannot be converted to `models::EmailAction`")))),
+            }
+        } else {
+            // The error enum is untagged, so decoding the body alone would pick the first variant its shape fits:
+            // the response's status picks the variant instead. Exact codes come before ranges (4XX), which match
+            // what's left of theirs, and a response without a body gives its variant without decoding one.
+            let local_var_entity: Option<GetAccountEmailActionError> =
+                match local_var_status.as_u16() {
+                    404 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(GetAccountEmailActionError::Status404),
+                    401 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(GetAccountEmailActionError::Status401),
+                    429 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(GetAccountEmailActionError::Status429),
+                    _ => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(GetAccountEmailActionError::UnknownValue),
                 };
             let local_var_error = ResponseContent {
                 status: local_var_status,
@@ -3115,6 +4374,176 @@ impl Api for Client {
                 _ => serde_json::from_str(&local_var_content)
                     .ok()
                     .map(GetCustomFileError::UnknownValue),
+            };
+            let local_var_error = ResponseContent {
+                status: local_var_status,
+                headers: local_var_headers,
+                content: local_var_content,
+                entity: local_var_entity,
+            };
+            Err(Error::ResponseError(local_var_error))
+        }
+    }
+
+    /// Returns one of a template's email actions, with its settings and whether its emails are failing.
+    async fn get_email_action(
+        &self,
+        params: GetEmailActionParams,
+    ) -> Result<models::EmailAction, Error<GetEmailActionError>> {
+        let GetEmailActionParams {
+            template_id,
+            email_action_id,
+        } = params;
+
+        let local_var_configuration = &self.configuration;
+
+        let local_var_client = &local_var_configuration.client;
+
+        let local_var_uri_str = format!(
+            "{}/templates/{template_id}/email_actions/{email_action_id}",
+            local_var_configuration.base_path,
+            template_id = crate::apis::urlencode(template_id),
+            email_action_id = crate::apis::urlencode(email_action_id)
+        );
+        let mut local_var_req_builder =
+            local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+        if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+            local_var_req_builder = local_var_req_builder
+                .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
+            local_var_req_builder = local_var_req_builder.basic_auth(
+                local_var_auth_conf.0.to_owned(),
+                local_var_auth_conf.1.to_owned(),
+            );
+        };
+
+        let local_var_req = local_var_req_builder.build()?;
+        crate::request_validator::check_request(
+            local_var_configuration,
+            "getEmailAction",
+            &local_var_req,
+            None,
+        )?;
+        let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+        let local_var_status = local_var_resp.status();
+        let local_var_content_type = local_var_resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream");
+        let local_var_content_type = super::ContentType::from(local_var_content_type);
+        let local_var_headers = local_var_resp.headers().clone();
+        let local_var_content = local_var_resp.text().await?;
+
+        if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+            match local_var_content_type {
+                ContentType::Json => serde_json::from_str(&local_var_content).map_err(Error::from),
+                ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailAction`"))),
+                ContentType::Unsupported(local_var_unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{local_var_unknown_type}` content type response that cannot be converted to `models::EmailAction`")))),
+            }
+        } else {
+            // The error enum is untagged, so decoding the body alone would pick the first variant its shape fits:
+            // the response's status picks the variant instead. Exact codes come before ranges (4XX), which match
+            // what's left of theirs, and a response without a body gives its variant without decoding one.
+            let local_var_entity: Option<GetEmailActionError> = match local_var_status.as_u16() {
+                404 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(GetEmailActionError::Status404),
+                401 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(GetEmailActionError::Status401),
+                429 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(GetEmailActionError::Status429),
+                _ => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(GetEmailActionError::UnknownValue),
+            };
+            let local_var_error = ResponseContent {
+                status: local_var_status,
+                headers: local_var_headers,
+                content: local_var_content,
+                entity: local_var_entity,
+            };
+            Err(Error::ResponseError(local_var_error))
+        }
+    }
+
+    /// Returns an email domain, whether it's verified, and the DNS records to add to it.
+    async fn get_email_domain(
+        &self,
+        params: GetEmailDomainParams,
+    ) -> Result<models::EmailDomain, Error<GetEmailDomainError>> {
+        let GetEmailDomainParams { email_domain_id } = params;
+
+        let local_var_configuration = &self.configuration;
+
+        let local_var_client = &local_var_configuration.client;
+
+        let local_var_uri_str = format!(
+            "{}/email_domains/{email_domain_id}",
+            local_var_configuration.base_path,
+            email_domain_id = crate::apis::urlencode(email_domain_id)
+        );
+        let mut local_var_req_builder =
+            local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+        if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+            local_var_req_builder = local_var_req_builder
+                .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
+            local_var_req_builder = local_var_req_builder.basic_auth(
+                local_var_auth_conf.0.to_owned(),
+                local_var_auth_conf.1.to_owned(),
+            );
+        };
+
+        let local_var_req = local_var_req_builder.build()?;
+        crate::request_validator::check_request(
+            local_var_configuration,
+            "getEmailDomain",
+            &local_var_req,
+            None,
+        )?;
+        let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+        let local_var_status = local_var_resp.status();
+        let local_var_content_type = local_var_resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream");
+        let local_var_content_type = super::ContentType::from(local_var_content_type);
+        let local_var_headers = local_var_resp.headers().clone();
+        let local_var_content = local_var_resp.text().await?;
+
+        if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+            match local_var_content_type {
+                ContentType::Json => serde_json::from_str(&local_var_content).map_err(Error::from),
+                ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailDomain`"))),
+                ContentType::Unsupported(local_var_unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{local_var_unknown_type}` content type response that cannot be converted to `models::EmailDomain`")))),
+            }
+        } else {
+            // The error enum is untagged, so decoding the body alone would pick the first variant its shape fits:
+            // the response's status picks the variant instead. Exact codes come before ranges (4XX), which match
+            // what's left of theirs, and a response without a body gives its variant without decoding one.
+            let local_var_entity: Option<GetEmailDomainError> = match local_var_status.as_u16() {
+                404 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(GetEmailDomainError::Status404),
+                401 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(GetEmailDomainError::Status401),
+                429 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(GetEmailDomainError::Status429),
+                _ => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(GetEmailDomainError::UnknownValue),
             };
             let local_var_error = ResponseContent {
                 status: local_var_status,
@@ -4180,6 +5609,91 @@ impl Api for Client {
         }
     }
 
+    /// Returns your account's email actions, newest first, one page at a time. Each one emails the files of every template's processed submissions, or of the templates and folders it lists. A template's own email actions are listed with the template (`GET /templates/{template_id}/email_actions`).
+    async fn list_account_email_actions(
+        &self,
+        params: ListAccountEmailActionsParams,
+    ) -> Result<models::EmailActionList, Error<ListAccountEmailActionsError>> {
+        let ListAccountEmailActionsParams { limit, cursor } = params;
+
+        let local_var_configuration = &self.configuration;
+
+        let local_var_client = &local_var_configuration.client;
+
+        let local_var_uri_str = format!("{}/email_actions", local_var_configuration.base_path);
+        let mut local_var_req_builder =
+            local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+        if let Some(ref param_value) = limit {
+            local_var_req_builder =
+                local_var_req_builder.query(&[("limit", &param_value.to_string())]);
+        }
+        if let Some(ref param_value) = cursor {
+            local_var_req_builder =
+                local_var_req_builder.query(&[("cursor", &param_value.to_string())]);
+        }
+        if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+            local_var_req_builder = local_var_req_builder
+                .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
+            local_var_req_builder = local_var_req_builder.basic_auth(
+                local_var_auth_conf.0.to_owned(),
+                local_var_auth_conf.1.to_owned(),
+            );
+        };
+
+        let local_var_req = local_var_req_builder.build()?;
+        crate::request_validator::check_request(
+            local_var_configuration,
+            "listAccountEmailActions",
+            &local_var_req,
+            None,
+        )?;
+        let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+        let local_var_status = local_var_resp.status();
+        let local_var_content_type = local_var_resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream");
+        let local_var_content_type = super::ContentType::from(local_var_content_type);
+        let local_var_headers = local_var_resp.headers().clone();
+        let local_var_content = local_var_resp.text().await?;
+
+        if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+            match local_var_content_type {
+                ContentType::Json => serde_json::from_str(&local_var_content).map_err(Error::from),
+                ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailActionList`"))),
+                ContentType::Unsupported(local_var_unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{local_var_unknown_type}` content type response that cannot be converted to `models::EmailActionList`")))),
+            }
+        } else {
+            // The error enum is untagged, so decoding the body alone would pick the first variant its shape fits:
+            // the response's status picks the variant instead. Exact codes come before ranges (4XX), which match
+            // what's left of theirs, and a response without a body gives its variant without decoding one.
+            let local_var_entity: Option<ListAccountEmailActionsError> =
+                match local_var_status.as_u16() {
+                    401 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(ListAccountEmailActionsError::Status401),
+                    429 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(ListAccountEmailActionsError::Status429),
+                    _ => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(ListAccountEmailActionsError::UnknownValue),
+                };
+            let local_var_error = ResponseContent {
+                status: local_var_status,
+                headers: local_var_headers,
+                content: local_var_content,
+                entity: local_var_entity,
+            };
+            Err(Error::ResponseError(local_var_error))
+        }
+    }
+
     /// Returns the combined PDFs in your account, newest first, one page at a time.
     async fn list_combined_pdfs(
         &self,
@@ -4343,6 +5857,185 @@ impl Api for Client {
                 _ => serde_json::from_str(&local_var_content)
                     .ok()
                     .map(ListCustomFilesError::UnknownValue),
+            };
+            let local_var_error = ResponseContent {
+                status: local_var_status,
+                headers: local_var_headers,
+                content: local_var_content,
+                entity: local_var_entity,
+            };
+            Err(Error::ResponseError(local_var_error))
+        }
+    }
+
+    /// Returns the email actions of a template's draft, and your account's email actions that send for it, newest first, one page at a time. Each one emails every processed submission's files to the people it lists. An account email action (`template_id` null) shows the settings it sends for this template, with the template's changes in `customization`.
+    async fn list_email_actions(
+        &self,
+        params: ListEmailActionsParams,
+    ) -> Result<models::EmailActionList, Error<ListEmailActionsError>> {
+        let ListEmailActionsParams {
+            template_id,
+            limit,
+            cursor,
+        } = params;
+
+        let local_var_configuration = &self.configuration;
+
+        let local_var_client = &local_var_configuration.client;
+
+        let local_var_uri_str = format!(
+            "{}/templates/{template_id}/email_actions",
+            local_var_configuration.base_path,
+            template_id = crate::apis::urlencode(template_id)
+        );
+        let mut local_var_req_builder =
+            local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+        if let Some(ref param_value) = limit {
+            local_var_req_builder =
+                local_var_req_builder.query(&[("limit", &param_value.to_string())]);
+        }
+        if let Some(ref param_value) = cursor {
+            local_var_req_builder =
+                local_var_req_builder.query(&[("cursor", &param_value.to_string())]);
+        }
+        if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+            local_var_req_builder = local_var_req_builder
+                .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
+            local_var_req_builder = local_var_req_builder.basic_auth(
+                local_var_auth_conf.0.to_owned(),
+                local_var_auth_conf.1.to_owned(),
+            );
+        };
+
+        let local_var_req = local_var_req_builder.build()?;
+        crate::request_validator::check_request(
+            local_var_configuration,
+            "listEmailActions",
+            &local_var_req,
+            None,
+        )?;
+        let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+        let local_var_status = local_var_resp.status();
+        let local_var_content_type = local_var_resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream");
+        let local_var_content_type = super::ContentType::from(local_var_content_type);
+        let local_var_headers = local_var_resp.headers().clone();
+        let local_var_content = local_var_resp.text().await?;
+
+        if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+            match local_var_content_type {
+                ContentType::Json => serde_json::from_str(&local_var_content).map_err(Error::from),
+                ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailActionList`"))),
+                ContentType::Unsupported(local_var_unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{local_var_unknown_type}` content type response that cannot be converted to `models::EmailActionList`")))),
+            }
+        } else {
+            // The error enum is untagged, so decoding the body alone would pick the first variant its shape fits:
+            // the response's status picks the variant instead. Exact codes come before ranges (4XX), which match
+            // what's left of theirs, and a response without a body gives its variant without decoding one.
+            let local_var_entity: Option<ListEmailActionsError> = match local_var_status.as_u16() {
+                404 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(ListEmailActionsError::Status404),
+                401 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(ListEmailActionsError::Status401),
+                429 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(ListEmailActionsError::Status429),
+                _ => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(ListEmailActionsError::UnknownValue),
+            };
+            let local_var_error = ResponseContent {
+                status: local_var_status,
+                headers: local_var_headers,
+                content: local_var_content,
+                entity: local_var_entity,
+            };
+            Err(Error::ResponseError(local_var_error))
+        }
+    }
+
+    /// Returns the domains in your account that email actions can send from once they're verified, newest first, one page at a time.
+    async fn list_email_domains(
+        &self,
+        params: ListEmailDomainsParams,
+    ) -> Result<models::EmailDomainList, Error<ListEmailDomainsError>> {
+        let ListEmailDomainsParams { limit, cursor } = params;
+
+        let local_var_configuration = &self.configuration;
+
+        let local_var_client = &local_var_configuration.client;
+
+        let local_var_uri_str = format!("{}/email_domains", local_var_configuration.base_path);
+        let mut local_var_req_builder =
+            local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+        if let Some(ref param_value) = limit {
+            local_var_req_builder =
+                local_var_req_builder.query(&[("limit", &param_value.to_string())]);
+        }
+        if let Some(ref param_value) = cursor {
+            local_var_req_builder =
+                local_var_req_builder.query(&[("cursor", &param_value.to_string())]);
+        }
+        if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+            local_var_req_builder = local_var_req_builder
+                .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
+            local_var_req_builder = local_var_req_builder.basic_auth(
+                local_var_auth_conf.0.to_owned(),
+                local_var_auth_conf.1.to_owned(),
+            );
+        };
+
+        let local_var_req = local_var_req_builder.build()?;
+        crate::request_validator::check_request(
+            local_var_configuration,
+            "listEmailDomains",
+            &local_var_req,
+            None,
+        )?;
+        let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+        let local_var_status = local_var_resp.status();
+        let local_var_content_type = local_var_resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream");
+        let local_var_content_type = super::ContentType::from(local_var_content_type);
+        let local_var_headers = local_var_resp.headers().clone();
+        let local_var_content = local_var_resp.text().await?;
+
+        if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+            match local_var_content_type {
+                ContentType::Json => serde_json::from_str(&local_var_content).map_err(Error::from),
+                ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailDomainList`"))),
+                ContentType::Unsupported(local_var_unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{local_var_unknown_type}` content type response that cannot be converted to `models::EmailDomainList`")))),
+            }
+        } else {
+            // The error enum is untagged, so decoding the body alone would pick the first variant its shape fits:
+            // the response's status picks the variant instead. Exact codes come before ranges (4XX), which match
+            // what's left of theirs, and a response without a body gives its variant without decoding one.
+            let local_var_entity: Option<ListEmailDomainsError> = match local_var_status.as_u16() {
+                401 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(ListEmailDomainsError::Status401),
+                429 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(ListEmailDomainsError::Status429),
+                _ => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(ListEmailDomainsError::UnknownValue),
             };
             let local_var_error = ResponseContent {
                 status: local_var_status,
@@ -5017,7 +6710,11 @@ impl Api for Client {
         &self,
         params: MoveFolderParams,
     ) -> Result<models::Folder, Error<MoveFolderError>> {
-        let MoveFolderParams { folder_id, body } = params;
+        let MoveFolderParams {
+            folder_id,
+            body,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -5034,6 +6731,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -5104,7 +6805,11 @@ impl Api for Client {
         &self,
         params: MoveTemplateParams,
     ) -> Result<models::Template, Error<MoveTemplateError>> {
-        let MoveTemplateParams { template_id, body } = params;
+        let MoveTemplateParams {
+            template_id,
+            body,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -5121,6 +6826,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -5191,7 +6900,11 @@ impl Api for Client {
         &self,
         params: PublishTemplateVersionParams,
     ) -> Result<models::TemplateVersion, Error<PublishTemplateVersionError>> {
-        let PublishTemplateVersionParams { template_id, body } = params;
+        let PublishTemplateVersionParams {
+            template_id,
+            body,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -5208,6 +6921,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -5282,7 +6999,11 @@ impl Api for Client {
         &self,
         params: RemoveTemplateFieldsParams,
     ) -> Result<models::TemplateFields, Error<RemoveTemplateFieldsError>> {
-        let RemoveTemplateFieldsParams { template_id, body } = params;
+        let RemoveTemplateFieldsParams {
+            template_id,
+            body,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -5299,6 +7020,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -5370,7 +7095,11 @@ impl Api for Client {
         &self,
         params: RenameFolderParams,
     ) -> Result<models::Folder, Error<RenameFolderError>> {
-        let RenameFolderParams { folder_id, body } = params;
+        let RenameFolderParams {
+            folder_id,
+            body,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -5387,6 +7116,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -5457,7 +7190,11 @@ impl Api for Client {
         &self,
         params: ReorderTemplateFieldsParams,
     ) -> Result<models::TemplateFields, Error<ReorderTemplateFieldsError>> {
-        let ReorderTemplateFieldsParams { template_id, body } = params;
+        let ReorderTemplateFieldsParams {
+            template_id,
+            body,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -5474,6 +7211,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -5545,7 +7286,11 @@ impl Api for Client {
         &self,
         params: RestoreTemplateVersionParams,
     ) -> Result<models::Template, Error<RestoreTemplateVersionError>> {
-        let RestoreTemplateVersionParams { template_id, body } = params;
+        let RestoreTemplateVersionParams {
+            template_id,
+            body,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -5562,6 +7307,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -5620,6 +7369,200 @@ impl Api for Client {
                     _ => serde_json::from_str(&local_var_content)
                         .ok()
                         .map(RestoreTemplateVersionError::UnknownValue),
+                };
+            let local_var_error = ResponseContent {
+                status: local_var_status,
+                headers: local_var_headers,
+                content: local_var_content,
+                entity: local_var_entity,
+            };
+            Err(Error::ResponseError(local_var_error))
+        }
+    }
+
+    /// Sends the account email action's email to the API token's user only, as it would go for one template it sends for, with each field shown as its name in brackets, so you can check how it looks. When the email action attaches its files and that template is a PDF template, the test attaches the template's blank PDF. It isn't recorded on any submission.
+    async fn send_account_email_action_test_email(
+        &self,
+        params: SendAccountEmailActionTestEmailParams,
+    ) -> Result<models::EmailActionTestEmail, Error<SendAccountEmailActionTestEmailError>> {
+        let SendAccountEmailActionTestEmailParams {
+            email_action_id,
+            body,
+            idempotency_key,
+        } = params;
+
+        let local_var_configuration = &self.configuration;
+
+        let local_var_client = &local_var_configuration.client;
+
+        let local_var_uri_str = format!(
+            "{}/email_actions/{email_action_id}/test_email",
+            local_var_configuration.base_path,
+            email_action_id = crate::apis::urlencode(email_action_id)
+        );
+        let mut local_var_req_builder =
+            local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+        if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+            local_var_req_builder = local_var_req_builder
+                .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
+        }
+        if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
+            local_var_req_builder = local_var_req_builder.basic_auth(
+                local_var_auth_conf.0.to_owned(),
+                local_var_auth_conf.1.to_owned(),
+            );
+        };
+        if let Some(ref local_var_body) = body {
+            local_var_req_builder = local_var_req_builder.json(local_var_body);
+        }
+
+        let local_var_req = local_var_req_builder.build()?;
+        crate::request_validator::check_request(
+            local_var_configuration,
+            "sendAccountEmailActionTestEmail",
+            &local_var_req,
+            None,
+        )?;
+        let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+        let local_var_status = local_var_resp.status();
+        let local_var_content_type = local_var_resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream");
+        let local_var_content_type = super::ContentType::from(local_var_content_type);
+        let local_var_headers = local_var_resp.headers().clone();
+        let local_var_content = local_var_resp.text().await?;
+
+        if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+            match local_var_content_type {
+                ContentType::Json => serde_json::from_str(&local_var_content).map_err(Error::from),
+                ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailActionTestEmail`"))),
+                ContentType::Unsupported(local_var_unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{local_var_unknown_type}` content type response that cannot be converted to `models::EmailActionTestEmail`")))),
+            }
+        } else {
+            // The error enum is untagged, so decoding the body alone would pick the first variant its shape fits:
+            // the response's status picks the variant instead. Exact codes come before ranges (4XX), which match
+            // what's left of theirs, and a response without a body gives its variant without decoding one.
+            let local_var_entity: Option<SendAccountEmailActionTestEmailError> =
+                match local_var_status.as_u16() {
+                    422 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(SendAccountEmailActionTestEmailError::Status422),
+                    409 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(SendAccountEmailActionTestEmailError::Status409),
+                    401 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(SendAccountEmailActionTestEmailError::Status401),
+                    429 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(SendAccountEmailActionTestEmailError::Status429),
+                    _ => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(SendAccountEmailActionTestEmailError::UnknownValue),
+                };
+            let local_var_error = ResponseContent {
+                status: local_var_status,
+                headers: local_var_headers,
+                content: local_var_content,
+                entity: local_var_entity,
+            };
+            Err(Error::ResponseError(local_var_error))
+        }
+    }
+
+    /// Sends the email action's email to the API token's user only, with each field and metadata value shown as its name in brackets, so you can check how it looks. When the email action attaches its files and the template is a PDF template, the test attaches the template's blank PDF. It isn't recorded on any submission. Without a paid plan, the user needs a confirmed email address.
+    async fn send_email_action_test_email(
+        &self,
+        params: SendEmailActionTestEmailParams,
+    ) -> Result<models::EmailActionTestEmail, Error<SendEmailActionTestEmailError>> {
+        let SendEmailActionTestEmailParams {
+            template_id,
+            email_action_id,
+            idempotency_key,
+        } = params;
+
+        let local_var_configuration = &self.configuration;
+
+        let local_var_client = &local_var_configuration.client;
+
+        let local_var_uri_str = format!(
+            "{}/templates/{template_id}/email_actions/{email_action_id}/test_email",
+            local_var_configuration.base_path,
+            template_id = crate::apis::urlencode(template_id),
+            email_action_id = crate::apis::urlencode(email_action_id)
+        );
+        let mut local_var_req_builder =
+            local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+        if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+            local_var_req_builder = local_var_req_builder
+                .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
+        }
+        if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
+            local_var_req_builder = local_var_req_builder.basic_auth(
+                local_var_auth_conf.0.to_owned(),
+                local_var_auth_conf.1.to_owned(),
+            );
+        };
+
+        let local_var_req = local_var_req_builder.build()?;
+        crate::request_validator::check_request(
+            local_var_configuration,
+            "sendEmailActionTestEmail",
+            &local_var_req,
+            None,
+        )?;
+        let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+        let local_var_status = local_var_resp.status();
+        let local_var_content_type = local_var_resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream");
+        let local_var_content_type = super::ContentType::from(local_var_content_type);
+        let local_var_headers = local_var_resp.headers().clone();
+        let local_var_content = local_var_resp.text().await?;
+
+        if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+            match local_var_content_type {
+                ContentType::Json => serde_json::from_str(&local_var_content).map_err(Error::from),
+                ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailActionTestEmail`"))),
+                ContentType::Unsupported(local_var_unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{local_var_unknown_type}` content type response that cannot be converted to `models::EmailActionTestEmail`")))),
+            }
+        } else {
+            // The error enum is untagged, so decoding the body alone would pick the first variant its shape fits:
+            // the response's status picks the variant instead. Exact codes come before ranges (4XX), which match
+            // what's left of theirs, and a response without a body gives its variant without decoding one.
+            let local_var_entity: Option<SendEmailActionTestEmailError> =
+                match local_var_status.as_u16() {
+                    409 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(SendEmailActionTestEmailError::Status409),
+                    403 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(SendEmailActionTestEmailError::Status403),
+                    401 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(SendEmailActionTestEmailError::Status401),
+                    429 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(SendEmailActionTestEmailError::Status429),
+                    _ => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(SendEmailActionTestEmailError::UnknownValue),
                 };
             let local_var_error = ResponseContent {
                 status: local_var_status,
@@ -5705,6 +7648,291 @@ impl Api for Client {
         }
     }
 
+    /// Changes one of your account's email actions. Properties left out keep their values. Its templates' customizations keep their own changes, and follow the rest. Set `enabled` to false to stop its emails for every template.
+    async fn update_account_email_action(
+        &self,
+        params: UpdateAccountEmailActionParams,
+    ) -> Result<models::EmailAction, Error<UpdateAccountEmailActionError>> {
+        let UpdateAccountEmailActionParams {
+            email_action_id,
+            body,
+            idempotency_key,
+        } = params;
+
+        let local_var_configuration = &self.configuration;
+
+        let local_var_client = &local_var_configuration.client;
+
+        let local_var_uri_str = format!(
+            "{}/email_actions/{email_action_id}",
+            local_var_configuration.base_path,
+            email_action_id = crate::apis::urlencode(email_action_id)
+        );
+        let mut local_var_req_builder =
+            local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
+
+        if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+            local_var_req_builder = local_var_req_builder
+                .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
+        }
+        if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
+            local_var_req_builder = local_var_req_builder.basic_auth(
+                local_var_auth_conf.0.to_owned(),
+                local_var_auth_conf.1.to_owned(),
+            );
+        };
+        local_var_req_builder = local_var_req_builder.json(&body);
+
+        let local_var_req = local_var_req_builder.build()?;
+        crate::request_validator::check_request(
+            local_var_configuration,
+            "updateAccountEmailAction",
+            &local_var_req,
+            None,
+        )?;
+        let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+        let local_var_status = local_var_resp.status();
+        let local_var_content_type = local_var_resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream");
+        let local_var_content_type = super::ContentType::from(local_var_content_type);
+        let local_var_headers = local_var_resp.headers().clone();
+        let local_var_content = local_var_resp.text().await?;
+
+        if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+            match local_var_content_type {
+                ContentType::Json => serde_json::from_str(&local_var_content).map_err(Error::from),
+                ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailAction`"))),
+                ContentType::Unsupported(local_var_unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{local_var_unknown_type}` content type response that cannot be converted to `models::EmailAction`")))),
+            }
+        } else {
+            // The error enum is untagged, so decoding the body alone would pick the first variant its shape fits:
+            // the response's status picks the variant instead. Exact codes come before ranges (4XX), which match
+            // what's left of theirs, and a response without a body gives its variant without decoding one.
+            let local_var_entity: Option<UpdateAccountEmailActionError> =
+                match local_var_status.as_u16() {
+                    401 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(UpdateAccountEmailActionError::Status401),
+                    429 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(UpdateAccountEmailActionError::Status429),
+                    _ => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(UpdateAccountEmailActionError::UnknownValue),
+                };
+            let local_var_error = ResponseContent {
+                status: local_var_status,
+                headers: local_var_headers,
+                content: local_var_content,
+                entity: local_var_entity,
+            };
+            Err(Error::ResponseError(local_var_error))
+        }
+    }
+
+    /// Changes an email action's settings. Properties left out keep their values. Set `enabled` to false to stop its emails, or to true to turn it back on after DocSpring turned it off.
+    async fn update_email_action(
+        &self,
+        params: UpdateEmailActionParams,
+    ) -> Result<models::EmailAction, Error<UpdateEmailActionError>> {
+        let UpdateEmailActionParams {
+            template_id,
+            email_action_id,
+            body,
+            idempotency_key,
+        } = params;
+
+        let local_var_configuration = &self.configuration;
+
+        let local_var_client = &local_var_configuration.client;
+
+        let local_var_uri_str = format!(
+            "{}/templates/{template_id}/email_actions/{email_action_id}",
+            local_var_configuration.base_path,
+            template_id = crate::apis::urlencode(template_id),
+            email_action_id = crate::apis::urlencode(email_action_id)
+        );
+        let mut local_var_req_builder =
+            local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
+
+        if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+            local_var_req_builder = local_var_req_builder
+                .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
+        }
+        if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
+            local_var_req_builder = local_var_req_builder.basic_auth(
+                local_var_auth_conf.0.to_owned(),
+                local_var_auth_conf.1.to_owned(),
+            );
+        };
+        local_var_req_builder = local_var_req_builder.json(&body);
+
+        let local_var_req = local_var_req_builder.build()?;
+        crate::request_validator::check_request(
+            local_var_configuration,
+            "updateEmailAction",
+            &local_var_req,
+            None,
+        )?;
+        let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+        let local_var_status = local_var_resp.status();
+        let local_var_content_type = local_var_resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream");
+        let local_var_content_type = super::ContentType::from(local_var_content_type);
+        let local_var_headers = local_var_resp.headers().clone();
+        let local_var_content = local_var_resp.text().await?;
+
+        if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+            match local_var_content_type {
+                ContentType::Json => serde_json::from_str(&local_var_content).map_err(Error::from),
+                ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailAction`"))),
+                ContentType::Unsupported(local_var_unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{local_var_unknown_type}` content type response that cannot be converted to `models::EmailAction`")))),
+            }
+        } else {
+            // The error enum is untagged, so decoding the body alone would pick the first variant its shape fits:
+            // the response's status picks the variant instead. Exact codes come before ranges (4XX), which match
+            // what's left of theirs, and a response without a body gives its variant without decoding one.
+            let local_var_entity: Option<UpdateEmailActionError> = match local_var_status.as_u16() {
+                422 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(UpdateEmailActionError::Status422),
+                409 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(UpdateEmailActionError::Status409),
+                401 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(UpdateEmailActionError::Status401),
+                429 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(UpdateEmailActionError::Status429),
+                _ => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(UpdateEmailActionError::UnknownValue),
+            };
+            let local_var_error = ResponseContent {
+                status: local_var_status,
+                headers: local_var_headers,
+                content: local_var_content,
+                entity: local_var_entity,
+            };
+            Err(Error::ResponseError(local_var_error))
+        }
+    }
+
+    /// Changes one of your account's email actions for this template only, replacing any changes the template had. Each setting you send is changed for this template, and the ones you leave out follow the account email action, including later changes to it. Set `enabled` to false to stop it sending for this template.
+    async fn update_email_action_customization(
+        &self,
+        params: UpdateEmailActionCustomizationParams,
+    ) -> Result<models::EmailAction, Error<UpdateEmailActionCustomizationError>> {
+        let UpdateEmailActionCustomizationParams {
+            template_id,
+            email_action_id,
+            body,
+            idempotency_key,
+        } = params;
+
+        let local_var_configuration = &self.configuration;
+
+        let local_var_client = &local_var_configuration.client;
+
+        let local_var_uri_str = format!(
+            "{}/templates/{template_id}/email_actions/{email_action_id}/customization",
+            local_var_configuration.base_path,
+            template_id = crate::apis::urlencode(template_id),
+            email_action_id = crate::apis::urlencode(email_action_id)
+        );
+        let mut local_var_req_builder =
+            local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
+
+        if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+            local_var_req_builder = local_var_req_builder
+                .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
+        }
+        if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
+            local_var_req_builder = local_var_req_builder.basic_auth(
+                local_var_auth_conf.0.to_owned(),
+                local_var_auth_conf.1.to_owned(),
+            );
+        };
+        local_var_req_builder = local_var_req_builder.json(&body);
+
+        let local_var_req = local_var_req_builder.build()?;
+        crate::request_validator::check_request(
+            local_var_configuration,
+            "updateEmailActionCustomization",
+            &local_var_req,
+            None,
+        )?;
+        let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+        let local_var_status = local_var_resp.status();
+        let local_var_content_type = local_var_resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream");
+        let local_var_content_type = super::ContentType::from(local_var_content_type);
+        let local_var_headers = local_var_resp.headers().clone();
+        let local_var_content = local_var_resp.text().await?;
+
+        if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+            match local_var_content_type {
+                ContentType::Json => serde_json::from_str(&local_var_content).map_err(Error::from),
+                ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailAction`"))),
+                ContentType::Unsupported(local_var_unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{local_var_unknown_type}` content type response that cannot be converted to `models::EmailAction`")))),
+            }
+        } else {
+            // The error enum is untagged, so decoding the body alone would pick the first variant its shape fits:
+            // the response's status picks the variant instead. Exact codes come before ranges (4XX), which match
+            // what's left of theirs, and a response without a body gives its variant without decoding one.
+            let local_var_entity: Option<UpdateEmailActionCustomizationError> =
+                match local_var_status.as_u16() {
+                    422 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(UpdateEmailActionCustomizationError::Status422),
+                    409 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(UpdateEmailActionCustomizationError::Status409),
+                    401 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(UpdateEmailActionCustomizationError::Status401),
+                    429 => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(UpdateEmailActionCustomizationError::Status429),
+                    _ => serde_json::from_str(&local_var_content)
+                        .ok()
+                        .map(UpdateEmailActionCustomizationError::UnknownValue),
+                };
+            let local_var_error = ResponseContent {
+                status: local_var_status,
+                headers: local_var_headers,
+                content: local_var_content,
+                entity: local_var_entity,
+            };
+            Err(Error::ResponseError(local_var_error))
+        }
+    }
+
     /// Changes a pending signature request's metadata, or how your app authenticated the person (for the audit trail). Once the person has opened it, only its metadata can be changed, and a completed or declined signature request can't be changed.
     async fn update_signature_request(
         &self,
@@ -5713,6 +7941,7 @@ impl Api for Client {
         let UpdateSignatureRequestParams {
             signature_request_id,
             body,
+            idempotency_key,
         } = params;
 
         let local_var_configuration = &self.configuration;
@@ -5730,6 +7959,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -5799,12 +8032,16 @@ impl Api for Client {
         }
     }
 
-    /// Changes a template's draft. Properties left out keep their values. `defaults` and `html_engine_options` replace the whole object, and `field_groups` changes only the groups it lists. Settings such as `webhook_url`, `public_submissions` and `expire_after` apply to every published version too, and setting `parent_folder_id` moves the template and all of its published versions.
+    /// Changes a template's draft. Properties left out keep their values. `defaults`, `html_engine_options` and a page design's `layout` replace the whole object, and `field_groups` changes only the groups it lists. A new layout adds a field for each new value it reads. Settings such as `webhook_url`, `public_submissions` and `expire_after` apply to every published version too, and setting `parent_folder_id` moves the template and all of its published versions.
     async fn update_template(
         &self,
         params: UpdateTemplateParams,
     ) -> Result<models::Template, Error<UpdateTemplateError>> {
-        let UpdateTemplateParams { template_id, body } = params;
+        let UpdateTemplateParams {
+            template_id,
+            body,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -5821,6 +8058,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -5898,6 +8139,7 @@ impl Api for Client {
             template_id,
             body,
             wait,
+            idempotency_key,
         } = params;
 
         let local_var_configuration = &self.configuration;
@@ -5919,6 +8161,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -5996,7 +8242,11 @@ impl Api for Client {
         &self,
         params: UpdateTemplateFieldsParams,
     ) -> Result<models::TemplateFields, Error<UpdateTemplateFieldsError>> {
-        let UpdateTemplateFieldsParams { template_id, body } = params;
+        let UpdateTemplateFieldsParams {
+            template_id,
+            body,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -6013,6 +8263,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -6084,7 +8338,11 @@ impl Api for Client {
         &self,
         params: UpdateWebhookParams,
     ) -> Result<models::Webhook, Error<UpdateWebhookError>> {
-        let UpdateWebhookParams { webhook_id, body } = params;
+        let UpdateWebhookParams {
+            webhook_id,
+            body,
+            idempotency_key,
+        } = params;
 
         let local_var_configuration = &self.configuration;
 
@@ -6101,6 +8359,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -6186,6 +8448,7 @@ impl Api for Client {
             field_naming,
             field_logic,
             output_format,
+            idempotency_key,
         } = params;
 
         let local_var_configuration = &self.configuration;
@@ -6203,6 +8466,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -6362,6 +8629,7 @@ impl Api for Client {
             document,
             wait,
             reimport_fields,
+            idempotency_key,
         } = params;
 
         let local_var_configuration = &self.configuration;
@@ -6383,6 +8651,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -6478,6 +8750,7 @@ impl Api for Client {
             template_id,
             body,
             version,
+            idempotency_key,
         } = params;
 
         let local_var_configuration = &self.configuration;
@@ -6499,6 +8772,10 @@ impl Api for Client {
         if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
             local_var_req_builder = local_var_req_builder
                 .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
         }
         if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
             local_var_req_builder = local_var_req_builder.basic_auth(
@@ -6564,6 +8841,93 @@ impl Api for Client {
             Err(Error::ResponseError(local_var_error))
         }
     }
+
+    /// Checks the email domain's DNS records now, instead of waiting for the next check. If DocSpring has stopped looking for its DKIM records (3 days after they were created), it starts again with new ones: replace the CNAME records with them.
+    async fn verify_email_domain(
+        &self,
+        params: VerifyEmailDomainParams,
+    ) -> Result<models::EmailDomain, Error<VerifyEmailDomainError>> {
+        let VerifyEmailDomainParams {
+            email_domain_id,
+            idempotency_key,
+        } = params;
+
+        let local_var_configuration = &self.configuration;
+
+        let local_var_client = &local_var_configuration.client;
+
+        let local_var_uri_str = format!(
+            "{}/email_domains/{email_domain_id}/verify",
+            local_var_configuration.base_path,
+            email_domain_id = crate::apis::urlencode(email_domain_id)
+        );
+        let mut local_var_req_builder =
+            local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+        if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+            local_var_req_builder = local_var_req_builder
+                .header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        }
+        if let Some(local_var_param_value) = idempotency_key {
+            local_var_req_builder =
+                local_var_req_builder.header("Idempotency-Key", local_var_param_value.to_string());
+        }
+        if let Some(ref local_var_auth_conf) = local_var_configuration.basic_auth {
+            local_var_req_builder = local_var_req_builder.basic_auth(
+                local_var_auth_conf.0.to_owned(),
+                local_var_auth_conf.1.to_owned(),
+            );
+        };
+
+        let local_var_req = local_var_req_builder.build()?;
+        crate::request_validator::check_request(
+            local_var_configuration,
+            "verifyEmailDomain",
+            &local_var_req,
+            None,
+        )?;
+        let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+        let local_var_status = local_var_resp.status();
+        let local_var_content_type = local_var_resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream");
+        let local_var_content_type = super::ContentType::from(local_var_content_type);
+        let local_var_headers = local_var_resp.headers().clone();
+        let local_var_content = local_var_resp.text().await?;
+
+        if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+            match local_var_content_type {
+                ContentType::Json => serde_json::from_str(&local_var_content).map_err(Error::from),
+                ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailDomain`"))),
+                ContentType::Unsupported(local_var_unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{local_var_unknown_type}` content type response that cannot be converted to `models::EmailDomain`")))),
+            }
+        } else {
+            // The error enum is untagged, so decoding the body alone would pick the first variant its shape fits:
+            // the response's status picks the variant instead. Exact codes come before ranges (4XX), which match
+            // what's left of theirs, and a response without a body gives its variant without decoding one.
+            let local_var_entity: Option<VerifyEmailDomainError> = match local_var_status.as_u16() {
+                401 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(VerifyEmailDomainError::Status401),
+                429 => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(VerifyEmailDomainError::Status429),
+                _ => serde_json::from_str(&local_var_content)
+                    .ok()
+                    .map(VerifyEmailDomainError::UnknownValue),
+            };
+            let local_var_error = ResponseContent {
+                status: local_var_status,
+                headers: local_var_headers,
+                content: local_var_content,
+                entity: local_var_entity,
+            };
+            Err(Error::ResponseError(local_var_error))
+        }
+    }
 }
 
 /// struct for typed errors of method [`Api::add_template_fields`]
@@ -6590,6 +8954,17 @@ pub enum CopyTemplateError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`Api::create_account_email_action`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CreateAccountEmailActionError {
+    Status422(models::ErrorResponse),
+    Status403(models::ErrorResponse),
+    Status401(models::ErrorResponse),
+    Status429(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`Api::create_combined_pdf`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -6609,6 +8984,29 @@ pub enum CreateCombinedPdfError {
 #[serde(untagged)]
 pub enum CreateCustomFileFromUploadError {
     Status422(models::ErrorResponse),
+    Status401(models::ErrorResponse),
+    Status429(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`Api::create_email_action`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CreateEmailActionError {
+    Status422(models::ErrorResponse),
+    Status403(models::ErrorResponse),
+    Status409(models::ErrorResponse),
+    Status401(models::ErrorResponse),
+    Status429(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`Api::create_email_domain`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CreateEmailDomainError {
+    Status422(models::ErrorResponse),
+    Status403(models::ErrorResponse),
     Status401(models::ErrorResponse),
     Status429(models::ErrorResponse),
     UnknownValue(serde_json::Value),
@@ -6712,12 +9110,50 @@ pub enum CreateWebhookError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`Api::delete_account_email_action`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum DeleteAccountEmailActionError {
+    Status401(models::ErrorResponse),
+    Status429(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`Api::delete_custom_file`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum DeleteCustomFileError {
     Status403(models::ErrorResponse),
     Status404(models::ErrorResponse),
+    Status401(models::ErrorResponse),
+    Status429(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`Api::delete_email_action`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum DeleteEmailActionError {
+    Status409(models::ErrorResponse),
+    Status401(models::ErrorResponse),
+    Status429(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`Api::delete_email_action_customization`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum DeleteEmailActionCustomizationError {
+    Status409(models::ErrorResponse),
+    Status401(models::ErrorResponse),
+    Status429(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`Api::delete_email_domain`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum DeleteEmailDomainError {
     Status401(models::ErrorResponse),
     Status429(models::ErrorResponse),
     UnknownValue(serde_json::Value),
@@ -6802,6 +9238,16 @@ pub enum GenerateSubmissionPreviewError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`Api::get_account_email_action`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetAccountEmailActionError {
+    Status404(models::ErrorResponse),
+    Status401(models::ErrorResponse),
+    Status429(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`Api::get_combined_pdf`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -6816,6 +9262,26 @@ pub enum GetCombinedPdfError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetCustomFileError {
+    Status404(models::ErrorResponse),
+    Status401(models::ErrorResponse),
+    Status429(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`Api::get_email_action`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetEmailActionError {
+    Status404(models::ErrorResponse),
+    Status401(models::ErrorResponse),
+    Status429(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`Api::get_email_domain`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetEmailDomainError {
     Status404(models::ErrorResponse),
     Status401(models::ErrorResponse),
     Status429(models::ErrorResponse),
@@ -6944,6 +9410,15 @@ pub enum GetWebhookError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`Api::list_account_email_actions`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ListAccountEmailActionsError {
+    Status401(models::ErrorResponse),
+    Status429(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`Api::list_combined_pdfs`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -6959,6 +9434,25 @@ pub enum ListCombinedPdfsError {
 #[serde(untagged)]
 pub enum ListCustomFilesError {
     Status422(models::ErrorResponse),
+    Status401(models::ErrorResponse),
+    Status429(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`Api::list_email_actions`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ListEmailActionsError {
+    Status404(models::ErrorResponse),
+    Status401(models::ErrorResponse),
+    Status429(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`Api::list_email_domains`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ListEmailDomainsError {
     Status401(models::ErrorResponse),
     Status429(models::ErrorResponse),
     UnknownValue(serde_json::Value),
@@ -7105,10 +9599,63 @@ pub enum RestoreTemplateVersionError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`Api::send_account_email_action_test_email`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum SendAccountEmailActionTestEmailError {
+    Status422(models::ErrorResponse),
+    Status409(models::ErrorResponse),
+    Status401(models::ErrorResponse),
+    Status429(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`Api::send_email_action_test_email`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum SendEmailActionTestEmailError {
+    Status409(models::ErrorResponse),
+    Status403(models::ErrorResponse),
+    Status401(models::ErrorResponse),
+    Status429(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`Api::test_authentication`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum TestAuthenticationError {
+    Status401(models::ErrorResponse),
+    Status429(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`Api::update_account_email_action`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum UpdateAccountEmailActionError {
+    Status401(models::ErrorResponse),
+    Status429(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`Api::update_email_action`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum UpdateEmailActionError {
+    Status422(models::ErrorResponse),
+    Status409(models::ErrorResponse),
+    Status401(models::ErrorResponse),
+    Status429(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`Api::update_email_action_customization`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum UpdateEmailActionCustomizationError {
+    Status422(models::ErrorResponse),
+    Status409(models::ErrorResponse),
     Status401(models::ErrorResponse),
     Status429(models::ErrorResponse),
     UnknownValue(serde_json::Value),
@@ -7204,6 +9751,15 @@ pub enum UploadTemplateDocumentError {
 pub enum ValidateSubmissionError {
     Status404(models::ErrorResponse),
     Status422(models::ErrorResponse),
+    Status401(models::ErrorResponse),
+    Status429(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`Api::verify_email_domain`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum VerifyEmailDomainError {
     Status401(models::ErrorResponse),
     Status429(models::ErrorResponse),
     UnknownValue(serde_json::Value),

@@ -11,8 +11,8 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// SubmissionActionState : Where a submission action (an upload to your storage) is.
-/// Where a submission action (an upload to your storage) is.
+/// SubmissionActionState : Where a submission action (an upload to your storage, or an email) is.
+/// Where a submission action (an upload to your storage, or an email) is.
 ///
 /// A value added to the API after this release is `Unknown`, with the value as the API sent it. A later release can
 /// add variants, so a `match` needs a wildcard arm.

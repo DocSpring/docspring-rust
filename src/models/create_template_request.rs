@@ -25,10 +25,10 @@ pub struct CreateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub description: Option<Option<String>>,
-    /// `pdf`: fields placed on an uploaded PDF. `html`: a PDF rendered from HTML and SCSS. `docx`: a Word document with tags where the data goes, which makes Word documents or PDFs. It can't be changed after the template is created.
+    /// `pdf`: fields placed on an uploaded PDF. `html`: a PDF rendered from HTML and SCSS. `docx`: a Word document with tags where the data goes, which makes Word documents or PDFs. `page_designer`: a page design, a PDF laid out in the Page Designer from its `layout`. It can't be changed after the template is created.
     #[serde(rename = "template_type")]
     pub template_type: models::TemplateType,
-    /// What each submission makes unless its request sets `output_formats`: `docx` (a Word document), `odt` (an OpenDocument file, converted from the Word document) or `pdf`. A Word template's is chosen when it's created; PDF and HTML templates always make PDFs. A Word template that encrypts its PDFs makes PDFs, because Word documents and OpenDocument files can't be password-protected.
+    /// What each submission makes unless its request sets `output_formats`: `docx` (a Word document), `odt` (an OpenDocument file, converted from the Word document) or `pdf`. A Word template's is chosen when it's created; other templates always make PDFs. A Word template that encrypts its PDFs makes PDFs, because Word documents and OpenDocument files can't be password-protected.
     #[serde(rename = "output_format", skip_serializing_if = "Option::is_none")]
     pub output_format: Option<models::OutputFormat>,
     /// The ID of the folder the template is in. Null for a template at the root. Setting it moves the template and all of its published versions.
@@ -75,7 +75,7 @@ pub struct CreateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub editable_submissions: Option<bool>,
-    /// The sites that can embed the template's live signature requests and its embedded template editor: a host such as `app.example.com`, with an optional leading wildcard (`*.example.com`), port (`localhost:3000`) or scheme (`https://app.example.com`; without one, `http` and `https` both work). Browsers open a live signature request in a frame only on these sites (and DocSpring's), so with an empty list it can't be embedded anywhere; a test signature request can be embedded on any site. The embedded template editor loads only for a page on one of these sites (by its Referer or Origin header), and on any site when the list is empty. Forms embedded on a page (Visual Forms JS and the simple form) aren't restricted.
+    /// The sites that can embed the template's live signature requests and its embedded template editor: a host such as `app.example.com`, with an optional leading wildcard (`*.example.com`), port (`localhost:3000`) or scheme (`https://app.example.com`; without one, `http` and `https` both work), without a path. Browsers open a live signature request in a frame only on these sites (and DocSpring's), so with an empty list it can't be embedded anywhere; a test signature request can be embedded on any site. The embedded template editor loads only for a page on one of these sites (by its Referer or Origin header), and on any site when the list is empty. Forms embedded on a page (Visual Forms JS and the simple form) aren't restricted.
     #[serde(rename = "embed_domains", skip_serializing_if = "Option::is_none")]
     pub embed_domains: Option<Vec<String>>,
     /// Allow the embedded template editor to change sensitive template settings (webhooks, redirect URL, encryption, public access, expiration and so on).
@@ -145,6 +145,59 @@ pub struct CreateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub redirect_url: Option<Option<String>>,
+    /// How DocSpring's completed emails send the signed PDF to your signers and CCs: `attachment` (attached, or a download link when it's too big to attach) or `link` (a download link). Null uses your account's rule: a link if your account has signed a BAA, otherwise attached. PDF templates only. A signature request uses the value it had when the request was created.
+    #[serde(
+        rename = "signature_request_email_attachments",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub signature_request_email_attachments:
+        Option<Option<models::SignatureRequestEmailAttachments>>,
+    /// The address DocSpring's emails to your signers come from: an address at one of your verified email domains, on the Growth plan or higher. Null sends them from DocSpring's shared address, with "via DocSpring" after the sender name. PDF templates only.
+    #[serde(
+        rename = "signature_request_from_address",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub signature_request_from_address: Option<Option<String>>,
+    /// Puts a signing token in `signature_request_signing_url`, as `{{ token_id }}` and `{{ token_secret }}`, so your page can open the signing form without creating a token itself. The email then carries a credential: anyone who has it can open the form and sign. PDF templates only.
+    #[serde(
+        rename = "signature_request_include_signing_token",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub signature_request_include_signing_token: Option<bool>,
+    /// The sender name on the emails DocSpring sends your signers, as in "Acme via DocSpring". It can't contain an email address, a website or quotes. Null uses your account's name. PDF templates only.
+    #[serde(
+        rename = "signature_request_from_name",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub signature_request_from_name: Option<Option<String>>,
+    /// Who DocSpring tells when a signature request's document is completed or declined, or an email bounces or can't be sent: members of your DocSpring team or addresses at your verified email domains. Empty means your account's owner. A submission's `notification_emails` replaces them. PDF templates only.
+    #[serde(
+        rename = "signature_request_notification_emails",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub signature_request_notification_emails: Option<Vec<String>>,
+    /// Where your signers' replies to DocSpring's emails go: a member of your DocSpring team or an address at one of your verified email domains. Null means your account's owner. A submission's `reply_to` replaces it. PDF templates only.
+    #[serde(
+        rename = "signature_request_reply_to",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub signature_request_reply_to: Option<Option<String>>,
+    /// A page on your own site that the button in DocSpring's email to a signer opens, instead of DocSpring's signing page: an https URL on one of your verified email domains or a subdomain of one, on the Growth plan or higher. It must include `{{ signature_request_id }}`. Your page authenticates the signer, creates a token for the signature request, and opens the signing form with it. Null links to DocSpring's signing page. PDF templates only.
+    #[serde(
+        rename = "signature_request_signing_url",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub signature_request_signing_url: Option<Option<String>>,
     /// A Slack incoming webhook URL that is notified about the template's submissions. It's never returned; `has_slack_webhook_url` says if it's set.
     #[serde(
         rename = "slack_webhook_url",
@@ -171,7 +224,7 @@ pub struct CreateTemplateRequest {
     )]
     pub predefined_fields_sample_data:
         Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
-    /// The HTML of an HTML template, as a Liquid template. Null for PDF and Word templates.
+    /// The HTML of an HTML template, as a Liquid template. Null for other templates.
     #[serde(
         rename = "html",
         default,
@@ -211,16 +264,24 @@ pub struct CreateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub html_engine_options: Option<Option<models::HtmlEngineOptionsInput>>,
-    /// Whether an HTML template HTML-escapes the values it prints. When true, `{{ value }}` prints a value as text, so a `<` or `&` in it is printed as that character, and `{{ value | raw }}` prints a value as HTML. New HTML templates default to true. Templates created before October 2026, or with API v1, default to false, which prints every value as HTML. Null for PDF templates.
+    /// Whether an HTML template HTML-escapes the values it prints. When true, `{{ value }}` prints a value as text, so a `<` or `&` in it is printed as that character, and `{{ value | raw }}` prints a value as HTML. New HTML templates default to true. Templates created before October 2026, or with API v1, default to false, which prints every value as HTML. Null for other templates.
     #[serde(rename = "html_escape_data", skip_serializing_if = "Option::is_none")]
     pub html_escape_data: Option<bool>,
+    /// A page design's layout: its page setup, its sections and the elements placed in them, in the Page Designer layout format (https://docspring.com/docs/page-designer/layout-format/). Its JSON Schema is at https://docspring.com/schemas/page-designer/layout.v1.json. Null for other templates. Setting it replaces the whole layout, and DocSpring adds a field for each value it reads. Left out when a page design is created, it starts with an empty page.
+    #[serde(
+        rename = "layout",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub layout: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
     /// The template's document, a PDF or a Word document (.docx or .odt): the `fields.key` of a file you uploaded with the presigned upload (GET /uploads/presign). PDF and Word templates need one of `cache_id`, `document_url` and `document_base64`. To upload the file with the request, use POST /templates/upload.
     #[serde(rename = "cache_id", skip_serializing_if = "Option::is_none")]
     pub cache_id: Option<String>,
     /// An https:// link to the template's document, instead of `cache_id`: a PDF template's PDF (up to 100 MB) or a Word template's Word document (.docx or .odt, up to 50 MB). DocSpring downloads it after responding, following redirects to other https:// links: the template's `document.state` is `downloading` until then, and `converting` while an .odt is converted (sync.api hosts wait for both). If it can't be downloaded, the state is `download_failed` and `document.error_message` says why.
     #[serde(rename = "document_url", skip_serializing_if = "Option::is_none")]
     pub document_url: Option<String>,
-    /// The template's document (a PDF, or a Word template's Word document), encoded as base64 (a `data:` URI works too), instead of `cache_id`. Up to 7 MB before it's encoded: send a larger file with `cache_id` or `document_url`.
+    /// The template's document (a PDF, or a Word template's Word document), encoded as base64 (a `data:` URI works too), instead of `cache_id`. Line breaks and spaces in it are ignored. Up to 7 MB before it's encoded: send a larger file with `cache_id` or `document_url`.
     #[serde(rename = "document_base64", skip_serializing_if = "Option::is_none")]
     pub document_base64: Option<String>,
     /// The file's name, for a `cache_id` (presigned uploads don't send one) or `document_base64`. A `document_url`'s is the last part of its path unless you set it.
@@ -270,6 +331,13 @@ impl CreateTemplateRequest {
             public_submissions: None,
             public_web_form: None,
             redirect_url: None,
+            signature_request_email_attachments: None,
+            signature_request_from_address: None,
+            signature_request_include_signing_token: None,
+            signature_request_from_name: None,
+            signature_request_notification_emails: None,
+            signature_request_reply_to: None,
+            signature_request_signing_url: None,
             slack_webhook_url: None,
             defaults: None,
             field_dependencies: None,
@@ -281,6 +349,7 @@ impl CreateTemplateRequest {
             footer_html: None,
             html_engine_options: None,
             html_escape_data: None,
+            layout: None,
             cache_id: None,
             document_url: None,
             document_base64: None,

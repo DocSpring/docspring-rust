@@ -25,6 +25,8 @@ pub enum SignatureRequestEventType {
     DeclineRequest,
     SignRequest,
     AllCompleted,
+    EmailBounced,
+    EmailMarkedAsSpam,
 
     /// A value this release doesn't know, as the API sent it
     Unknown(String),
@@ -39,6 +41,8 @@ impl SignatureRequestEventType {
         Self::DeclineRequest,
         Self::SignRequest,
         Self::AllCompleted,
+        Self::EmailBounced,
+        Self::EmailMarkedAsSpam,
     ];
 
     /// The value as the API sends it
@@ -50,6 +54,8 @@ impl SignatureRequestEventType {
             Self::DeclineRequest => "decline_request",
             Self::SignRequest => "sign_request",
             Self::AllCompleted => "all_completed",
+            Self::EmailBounced => "email_bounced",
+            Self::EmailMarkedAsSpam => "email_marked_as_spam",
             Self::Unknown(value) => value,
         }
     }
@@ -69,6 +75,8 @@ impl From<&str> for SignatureRequestEventType {
             "decline_request" => Self::DeclineRequest,
             "sign_request" => Self::SignRequest,
             "all_completed" => Self::AllCompleted,
+            "email_bounced" => Self::EmailBounced,
+            "email_marked_as_spam" => Self::EmailMarkedAsSpam,
             _ => Self::Unknown(value.to_owned()),
         }
     }

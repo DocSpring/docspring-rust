@@ -7,9 +7,11 @@
 | SubmissionProcessed | submission.processed |
 | SubmissionFailed | submission.failed |
 | SubmissionDeclined | submission.declined |
+| SignatureRequestSent | signature_request.sent |
 | SignatureRequestViewed | signature_request.viewed |
 | SignatureRequestCompleted | signature_request.completed |
 | SignatureRequestDeclined | signature_request.declined |
+| SignatureRequestEmailBounced | signature_request.email_bounced |
 | CombinedPdfProcessed | combined_pdf.processed |
 | CombinedPdfFailed | combined_pdf.failed |
 | SubmissionBatchProcessed | submission_batch.processed |

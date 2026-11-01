@@ -79,7 +79,7 @@ impl Default for Configuration {
     fn default() -> Self {
         Configuration {
             base_path: "https://sync.api.docspring.com/api/v2".to_owned(),
-            user_agent: Some("docspring-rust-4.3.0".to_owned()),
+            user_agent: Some("docspring-rust-4.4.0".to_owned()),
             client: reqwest::Client::new(),
             basic_auth: None,
             oauth_access_token: None,

@@ -22,6 +22,7 @@ pub enum TemplateType {
     Pdf,
     Html,
     Docx,
+    PageDesigner,
 
     /// A value this release doesn't know, as the API sent it
     Unknown(String),
@@ -29,7 +30,8 @@ pub enum TemplateType {
 
 impl TemplateType {
     /// The values this release knows
-    pub const VALUES: &'static [TemplateType] = &[Self::Pdf, Self::Html, Self::Docx];
+    pub const VALUES: &'static [TemplateType] =
+        &[Self::Pdf, Self::Html, Self::Docx, Self::PageDesigner];
 
     /// The value as the API sends it
     pub fn as_str(&self) -> &str {
@@ -37,6 +39,7 @@ impl TemplateType {
             Self::Pdf => "pdf",
             Self::Html => "html",
             Self::Docx => "docx",
+            Self::PageDesigner => "page_designer",
             Self::Unknown(value) => value,
         }
     }
@@ -53,6 +56,7 @@ impl From<&str> for TemplateType {
             "pdf" => Self::Pdf,
             "html" => Self::Html,
             "docx" => Self::Docx,
+            "page_designer" => Self::PageDesigner,
             _ => Self::Unknown(value.to_owned()),
         }
     }

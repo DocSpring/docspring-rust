@@ -23,7 +23,7 @@ pub struct HtmlEngineOptionsInput {
     /// The page height for the `Custom` format, with a unit.
     #[serde(rename = "height", skip_serializing_if = "Option::is_none")]
     pub height: Option<String>,
-    /// How much to scale the page, such as `0.8`. `1` prints it at its normal size.
+    /// How much to scale the page, from 0.1 to 2, such as `0.8`. `1` prints it at its normal size.
     #[serde(rename = "scale", skip_serializing_if = "Option::is_none")]
     pub scale: Option<f64>,
     /// Print pages in landscape orientation.

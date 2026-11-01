@@ -1,0 +1,73 @@
+# Written by DocSpring/docspring's api_clients/scripts/generate from api_clients/github_workflows/rust/release.yml:
+# change it there.
+#
+# Packages and builds the crate on every push and pull request. A v* tag (pushed by the monorepo's
+# api_clients/scripts/release) also publishes it to crates.io with trusted publishing, in the release environment, and
+# waits until crates.io serves it.
+name: Release
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check the tag matches the package version
+        if: github.ref_type == 'tag'
+        run: |
+          VERSION="$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')"
+          if [ "v$VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::The tag is $GITHUB_REF_NAME, but the package version is $VERSION"
+            exit 1
+          fi
+      # Packages the crate and builds the packaged copy, as cargo publish does
+      - run: cargo publish --dry-run
+
+  publish:
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      # cargo publishes from the source: crates.io takes no prebuilt .crate file
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: rust-lang/crates-io-auth-action@3268eb413133e2960fa4ae0e963ca76380c54cd9 # v1.0.6
+        id: auth
+      - run: cargo publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+  verify:
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Wait until crates.io serves the version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          for _ in $(seq 60); do
+            # crates.io's API refuses requests without a User-Agent
+            if curl -fsS -o /dev/null -A "docspring-release (support@docspring.com)" \
+              "https://crates.io/api/v1/crates/docspring/$VERSION"; then
+              echo "crates.io serves docspring $VERSION"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::crates.io doesn't serve docspring $VERSION after 10 minutes"
+          exit 1

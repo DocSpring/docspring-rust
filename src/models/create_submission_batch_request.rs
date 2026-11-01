@@ -20,7 +20,7 @@ pub struct CreateSubmissionBatchRequest {
     /// The template for each submission that doesn't name its own `template_id`.
     #[serde(rename = "template_id", skip_serializing_if = "Option::is_none")]
     pub template_id: Option<String>,
-    /// The template version to use: a published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` or `draft`. Default `latest` (the draft when no version has been published).
+    /// The template version to use: a published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` (the newest published version, or the draft when none has been published) or `draft`. Default `latest`.
     #[serde(rename = "template_version", skip_serializing_if = "Option::is_none")]
     pub template_version: Option<String>,
     /// The default `test` for each submission that doesn't set its own.
@@ -29,7 +29,7 @@ pub struct CreateSubmissionBatchRequest {
     /// The default `output_formats` for each submission that doesn't set its own.
     #[serde(rename = "output_formats", skip_serializing_if = "Option::is_none")]
     pub output_formats: Option<Vec<models::OutputFormat>>,
-    /// Up to 50 submissions. Each one takes the properties of POST /templates/{template_id}/submissions except `signature_requests`, plus `template_id` and `template_version` when it uses a different template from the batch.
+    /// Up to 50 submissions. Each one takes the properties of POST /templates/{template_id}/submissions except `signature_requests` and the options for DocSpring's emails to signers (`send_email`, `signing_order`, `email_subject`, `email_message`, `cc`, `reply_to`, `notification_emails`, `notify_when_signed` and `reminders`), plus `template_id` and `template_version` when it uses a different template from the batch.
     #[serde(rename = "submissions")]
     pub submissions: Vec<models::SubmissionInput>,
 }

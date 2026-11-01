@@ -23,7 +23,7 @@ pub struct SignatureRequest {
     /// The name of the person the request is for.
     #[serde(rename = "name", deserialize_with = "Option::deserialize")]
     pub name: Option<String>,
-    /// Their email address.
+    /// Their email address. Null when they have none.
     #[serde(rename = "email", deserialize_with = "Option::deserialize")]
     pub email: Option<String>,
     /// The fields this person fills in. Null for a signature request created with API v1 without a field list: it asks for every field the submission's data doesn't have.
@@ -38,6 +38,18 @@ pub struct SignatureRequest {
     /// The signer's position, from 0: `Signer 1` is 0. The template's `@@signature_requests/<sort_order>` fields print this signature request's details.
     #[serde(rename = "sort_order")]
     pub sort_order: i32,
+    /// Whether DocSpring emails this person their signing link.
+    #[serde(rename = "send_email")]
+    pub send_email: bool,
+    /// When this person signs, when the submission's `signing_order` is `sequential`: everyone in step 1 first, then step 2, and so on. Null when everyone can sign at once.
+    #[serde(rename = "signing_step", deserialize_with = "Option::deserialize")]
+    pub signing_step: Option<i32>,
+    /// When DocSpring first emailed this person their signing link. Null until it has, and when it doesn't email them (`send_email` is false).
+    #[serde(rename = "sent_at", deserialize_with = "Option::deserialize")]
+    pub sent_at: Option<chrono::DateTime<chrono::FixedOffset>>,
+    /// What happened to the latest email DocSpring sent this person with their signing link: `sent` until the email service reports on it, then `delayed` (still trying), `delivered`, `undelivered` (it stopped trying, as with a full mailbox), `bounced` (the address doesn't exist) or `complained` (marked as spam). `failed` means DocSpring couldn't send the first email with their link, and `unknown` that it couldn't tell whether that email went: neither is sent again. Null until DocSpring has emailed them or tried to.
+    #[serde(rename = "email_status", deserialize_with = "Option::deserialize")]
+    pub email_status: Option<models::SignatureRequestEmailStatus>,
     /// `pending` until the person completes the signature request (`completed`) or declines it (`declined`).
     #[serde(rename = "state")]
     pub state: models::SignatureRequestState,
@@ -114,6 +126,10 @@ impl SignatureRequest {
         metadata: std::collections::HashMap<String, serde_json::Value>,
         role: String,
         sort_order: i32,
+        send_email: bool,
+        signing_step: Option<i32>,
+        sent_at: Option<chrono::DateTime<chrono::FixedOffset>>,
+        email_status: Option<models::SignatureRequestEmailStatus>,
         state: models::SignatureRequestState,
         data: Option<std::collections::HashMap<String, serde_json::Value>>,
         viewed_at: Option<chrono::DateTime<chrono::FixedOffset>>,
@@ -141,6 +157,10 @@ impl SignatureRequest {
             metadata,
             role,
             sort_order,
+            send_email,
+            signing_step,
+            sent_at,
+            email_status,
             state,
             data,
             viewed_at,

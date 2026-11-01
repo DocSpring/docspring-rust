@@ -20,10 +20,17 @@ use serde::{Deserialize, Serialize};
 #[non_exhaustive]
 pub enum StringConditionType {
     Equals,
+    NotEquals,
     Contains,
+    NotContains,
     StartsWith,
+    NotStartsWith,
     EndsWith,
+    NotEndsWith,
     Regex,
+    NotRegex,
+    Blank,
+    NotBlank,
 
     /// A value this release doesn't know, as the API sent it
     Unknown(String),
@@ -33,20 +40,34 @@ impl StringConditionType {
     /// The values this release knows
     pub const VALUES: &'static [StringConditionType] = &[
         Self::Equals,
+        Self::NotEquals,
         Self::Contains,
+        Self::NotContains,
         Self::StartsWith,
+        Self::NotStartsWith,
         Self::EndsWith,
+        Self::NotEndsWith,
         Self::Regex,
+        Self::NotRegex,
+        Self::Blank,
+        Self::NotBlank,
     ];
 
     /// The value as the API sends it
     pub fn as_str(&self) -> &str {
         match self {
             Self::Equals => "equals",
+            Self::NotEquals => "not_equals",
             Self::Contains => "contains",
+            Self::NotContains => "not_contains",
             Self::StartsWith => "starts_with",
+            Self::NotStartsWith => "not_starts_with",
             Self::EndsWith => "ends_with",
+            Self::NotEndsWith => "not_ends_with",
             Self::Regex => "regex",
+            Self::NotRegex => "not_regex",
+            Self::Blank => "blank",
+            Self::NotBlank => "not_blank",
             Self::Unknown(value) => value,
         }
     }
@@ -61,10 +82,17 @@ impl From<&str> for StringConditionType {
     fn from(value: &str) -> Self {
         match value {
             "equals" => Self::Equals,
+            "not_equals" => Self::NotEquals,
             "contains" => Self::Contains,
+            "not_contains" => Self::NotContains,
             "starts_with" => Self::StartsWith,
+            "not_starts_with" => Self::NotStartsWith,
             "ends_with" => Self::EndsWith,
+            "not_ends_with" => Self::NotEndsWith,
             "regex" => Self::Regex,
+            "not_regex" => Self::NotRegex,
+            "blank" => Self::Blank,
+            "not_blank" => Self::NotBlank,
             _ => Self::Unknown(value.to_owned()),
         }
     }

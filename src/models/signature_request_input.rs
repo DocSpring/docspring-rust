@@ -22,7 +22,7 @@ pub struct SignatureRequestInput {
         skip_serializing_if = "Option::is_none"
     )]
     pub name: Option<Option<String>>,
-    /// Their email address.
+    /// Their email address. Null when they have none.
     #[serde(
         rename = "email",
         default,
@@ -40,8 +40,8 @@ pub struct SignatureRequestInput {
     #[serde(rename = "role", skip_serializing_if = "Option::is_none")]
     pub role: Option<String>,
     /// How your app authenticated the person before it showed them the signature request.
-    #[serde(rename = "auth_type")]
-    pub auth_type: models::SignatureRequestAuthType,
+    #[serde(rename = "auth_type", skip_serializing_if = "Option::is_none")]
+    pub auth_type: Option<models::SignatureRequestAuthType>,
     /// The second factor your app authenticated them with, if any.
     #[serde(
         rename = "auth_second_factor_type",
@@ -108,21 +108,24 @@ pub struct SignatureRequestInput {
         skip_serializing_if = "Option::is_none"
     )]
     pub prefilled_values_editable: Option<bool>,
+    /// Whether DocSpring emails this person their signing link. Default: the submission's `send_email`. Set it to false for someone who signs in your app (embedded signing) or whose link you send yourself. When DocSpring emails them, `email` is required and `auth_type` is `email_link` (the default). Otherwise `auth_type` is required.
+    #[serde(rename = "send_email", skip_serializing_if = "Option::is_none")]
+    pub send_email: Option<bool>,
+    /// When this person signs, with `signing_order: sequential`: everyone in step 1 first, then step 2, and so on. People in the same step sign in any order. Only the order of the numbers matters. Either every signature request has a `signing_step` or none does; without them, each person is a step of their own, in the order of `signature_requests`.
+    #[serde(rename = "signing_step", skip_serializing_if = "Option::is_none")]
+    pub signing_step: Option<i32>,
 }
 
 impl SignatureRequestInput {
     /// A request for someone to fill in their fields of a submission and sign it. Someone who only fills in fields for the people who sign later (such as an employer's section) has a signature request too. The submission's PDF is generated once every signature request is completed.
-    pub fn new(
-        fields: Vec<String>,
-        auth_type: models::SignatureRequestAuthType,
-    ) -> SignatureRequestInput {
+    pub fn new(fields: Vec<String>) -> SignatureRequestInput {
         SignatureRequestInput {
             name: None,
             email: None,
             fields,
             metadata: None,
             role: None,
-            auth_type,
+            auth_type: None,
             auth_second_factor_type: None,
             auth_provider: None,
             auth_session_started_at: None,
@@ -132,6 +135,8 @@ impl SignatureRequestInput {
             auth_phone_number_hash: None,
             ignore_unknown_fields: None,
             prefilled_values_editable: None,
+            send_email: None,
+            signing_step: None,
         }
     }
 }

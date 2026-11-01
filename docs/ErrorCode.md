@@ -8,6 +8,7 @@
 | Unauthorized | unauthorized |
 | PaymentRequired | payment_required |
 | InsufficientCredits | insufficient_credits |
+| InsufficientCreditsToSend | insufficient_credits_to_send |
 | Forbidden | forbidden |
 | UpgradeRequired | upgrade_required |
 | AccountSuspended | account_suspended |
@@ -20,6 +21,7 @@
 | ValidationFailed | validation_failed |
 | InvalidData | invalid_data |
 | RateLimited | rate_limited |
+| DailyEmailLimitReached | daily_email_limit_reached |
 | InternalError | internal_error |
 | BadGateway | bad_gateway |
 | ServiceUnavailable | service_unavailable |
