@@ -15,6 +15,7 @@ Name | Type | Description | Notes
 **verified_at** | Option<**chrono::DateTime<chrono::FixedOffset>**> | When the domain was verified. | 
 **checked_at** | Option<**chrono::DateTime<chrono::FixedOffset>**> | When DocSpring last checked the domain's DNS records. | 
 **created_at** | **chrono::DateTime<chrono::FixedOffset>** | When the domain was added. | 
+**additional_properties** | **serde_json::Map<String, serde_json::Value>** | Properties the schema doesn't list (it allows additional properties), in the order they came (with serde_json's `preserve_order` feature) or sorted by name. | [optional]
 
 [[Back to Model list]](../README.md#methods) [[Back to API list]](../README.md#methods) [[Back to README]](../README.md)
 

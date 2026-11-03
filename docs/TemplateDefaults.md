@@ -24,6 +24,7 @@ Name | Type | Description | Notes
 **shape_fill_color** | Option<**String**> | The fill color of shapes, as 6 hex digits. | [optional]
 **shape_border_color** | Option<**String**> | The border color of shapes, as 6 hex digits. | [optional]
 **shape_border_width** | Option<**f64**> | The border width of shapes, in whole points (at least 1). | [optional]
+**additional_properties** | **serde_json::Map<String, serde_json::Value>** | Properties the schema doesn't list (it allows additional properties), in the order they came (with serde_json's `preserve_order` feature) or sorted by name. | [optional]
 
 [[Back to Model list]](../README.md#methods) [[Back to API list]](../README.md#methods) [[Back to README]](../README.md)
 

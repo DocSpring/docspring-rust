@@ -12,6 +12,7 @@ Name | Type | Description | Notes
 **min_items** | Option<**i32**> | Lists only (`type` `array`): the fewest items submission data must have. Null for no minimum. | 
 **max_items** | Option<**i32**> | HTML and Word templates' lists only: the most items submission data can have. Null for no limit. A PDF template's list takes as many items as its fields are numbered for, or more with `allow_additional_items`. | 
 **allow_additional_items** | **bool** | PDF templates' lists only: submission data can have more items than the list's fields are numbered for. Default false. | 
+**additional_properties** | **serde_json::Map<String, serde_json::Value>** | Properties the schema doesn't list (it allows additional properties), in the order they came (with serde_json's `preserve_order` feature) or sorted by name. | [optional]
 
 [[Back to Model list]](../README.md#methods) [[Back to API list]](../README.md#methods) [[Back to README]](../README.md)
 

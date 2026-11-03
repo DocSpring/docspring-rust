@@ -26,6 +26,9 @@ pub struct PageImages {
     /// An image of each page, in order: `pages[0]` is page 1. Lists of submissions leave it out (null): get the submission to see them. Empty until the images have been made.
     #[serde(rename = "pages", deserialize_with = "Option::deserialize")]
     pub pages: Option<Vec<models::PageImage>>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl PageImages {
@@ -41,6 +44,7 @@ impl PageImages {
             error_message,
             page_count,
             pages,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

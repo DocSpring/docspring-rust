@@ -107,6 +107,9 @@ pub struct EmailAction {
     /// When the email action was last changed.
     #[serde(rename = "updated_at")]
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl EmailAction {
@@ -174,6 +177,7 @@ impl EmailAction {
             customization,
             created_at,
             updated_at,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

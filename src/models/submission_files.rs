@@ -31,6 +31,9 @@ pub struct SubmissionFiles {
     pub odt: Option<models::GeneratedFile>,
     #[serde(rename = "png", skip_serializing_if = "Option::is_none")]
     pub png: Option<models::PageImages>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl SubmissionFiles {
@@ -43,6 +46,7 @@ impl SubmissionFiles {
             docx: None,
             odt: None,
             png: None,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

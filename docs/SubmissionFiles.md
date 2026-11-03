@@ -10,6 +10,7 @@ Name | Type | Description | Notes
 **docx** | Option<[**models::GeneratedFile**](GeneratedFile.md)> | The Word document of a Word template's submission, when the submission makes one (`output_formats`). | [optional]
 **odt** | Option<[**models::GeneratedFile**](GeneratedFile.md)> | The OpenDocument file (.odt, the format LibreOffice uses) of a Word template's submission, converted from its Word document, when the submission makes one (`output_formats`). | [optional]
 **png** | Option<[**models::PageImages**](PageImages.md)> |  | [optional]
+**additional_properties** | **serde_json::Map<String, serde_json::Value>** | Properties the schema doesn't list (it allows additional properties), in the order they came (with serde_json's `preserve_order` feature) or sorted by name. | [optional]
 
 [[Back to Model list]](../README.md#methods) [[Back to API list]](../README.md#methods) [[Back to README]](../README.md)
 

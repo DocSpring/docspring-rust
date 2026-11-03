@@ -33,6 +33,7 @@ Name | Type | Description | Notes
 **user_agent** | Option<**String**> | The User-Agent header of the browser they completed the signature request with. Null in the events of a webhook that leaves out submission data. | 
 **created_at** | **chrono::DateTime<chrono::FixedOffset>** | When the signature request was created. | 
 **updated_at** | **chrono::DateTime<chrono::FixedOffset>** | When the signature request was last updated. | 
+**additional_properties** | **serde_json::Map<String, serde_json::Value>** | Properties the schema doesn't list (it allows additional properties), in the order they came (with serde_json's `preserve_order` feature) or sorted by name. | [optional]
 
 [[Back to Model list]](../README.md#methods) [[Back to API list]](../README.md#methods) [[Back to README]](../README.md)
 

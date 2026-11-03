@@ -12,6 +12,7 @@ Name | Type | Description | Notes
 **page_count** | Option<**i32**> | How many pages the template printed, once it's processed. | 
 **pages** | [**Vec<models::PageImage>**](PageImage.md) | A PNG image of each page once it's processed, in order: `pages[0]` is page 1. A preview has no PDF. Their `download_url`s expire, so get the preview again when you need them. | 
 **expires_at** | **chrono::DateTime<chrono::FixedOffset>** | When the preview and its images are deleted. | 
+**additional_properties** | **serde_json::Map<String, serde_json::Value>** | Properties the schema doesn't list (it allows additional properties), in the order they came (with serde_json's `preserve_order` feature) or sorted by name. | [optional]
 
 [[Back to Model list]](../README.md#methods) [[Back to API list]](../README.md#methods) [[Back to README]](../README.md)
 

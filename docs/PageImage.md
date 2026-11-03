@@ -13,6 +13,7 @@ Name | Type | Description | Notes
 **content_type** | **String** | The image's media type, `image/png` for a submission's pages or `image/jpeg` for a template's. | 
 **size** | **i32** | The image's size in bytes. | 
 **sha256** | Option<**String**> | The SHA-256 hash of the image. Null for a template's page images. | 
+**additional_properties** | **serde_json::Map<String, serde_json::Value>** | Properties the schema doesn't list (it allows additional properties), in the order they came (with serde_json's `preserve_order` feature) or sorted by name. | [optional]
 
 [[Back to Model list]](../README.md#methods) [[Back to API list]](../README.md#methods) [[Back to README]](../README.md)
 

@@ -38,6 +38,9 @@ pub struct GeneratedFile {
     /// The SHA-256 hash of the file. Null until the file has been made.
     #[serde(rename = "sha256", deserialize_with = "Option::deserialize")]
     pub sha256: Option<String>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl GeneratedFile {
@@ -61,6 +64,7 @@ impl GeneratedFile {
             content_type,
             size,
             sha256,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

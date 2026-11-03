@@ -47,6 +47,9 @@ pub struct EmailDomain {
     /// When the domain was added.
     #[serde(rename = "created_at")]
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl EmailDomain {
@@ -76,6 +79,7 @@ impl EmailDomain {
             verified_at,
             checked_at,
             created_at,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

@@ -34,6 +34,7 @@ Name | Type | Description | Notes
 **customization** | Option<[**models::EmailActionCustomization**](EmailActionCustomization.md)> | In a template's list of email actions, its changes to an account email action, or null when it changes nothing. The email action's settings are then the ones it sends for that template. Null everywhere else. | 
 **created_at** | **chrono::DateTime<chrono::FixedOffset>** | When the email action was created. | 
 **updated_at** | **chrono::DateTime<chrono::FixedOffset>** | When the email action was last changed. | 
+**additional_properties** | **serde_json::Map<String, serde_json::Value>** | Properties the schema doesn't list (it allows additional properties), in the order they came (with serde_json's `preserve_order` feature) or sorted by name. | [optional]
 
 [[Back to Model list]](../README.md#methods) [[Back to API list]](../README.md#methods) [[Back to README]](../README.md)
 

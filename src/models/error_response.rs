@@ -16,11 +16,17 @@ use serde::{Deserialize, Serialize};
 pub struct ErrorResponse {
     #[serde(rename = "error")]
     pub error: models::ErrorInfo,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl ErrorResponse {
     /// The body of every error response.
     pub fn new(error: models::ErrorInfo) -> ErrorResponse {
-        ErrorResponse { error }
+        ErrorResponse {
+            error,
+            additional_properties: serde_json::Map::new(),
+        }
     }
 }

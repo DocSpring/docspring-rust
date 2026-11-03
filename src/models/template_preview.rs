@@ -38,6 +38,9 @@ pub struct TemplatePreview {
     /// When the preview and its images are deleted.
     #[serde(rename = "expires_at")]
     pub expires_at: chrono::DateTime<chrono::FixedOffset>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl TemplatePreview {
@@ -61,6 +64,7 @@ impl TemplatePreview {
             page_count,
             pages,
             expires_at,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

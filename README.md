@@ -10,7 +10,7 @@ e-signatures.
 The code in this repository is generated from DocSpring's OpenAPI spec ([About this SDK](#about-this-sdk)). Issues and
 pull requests are welcome.
 
-Version 4.4.0. Requires Rust 1.88 or later.
+Version 4.5.0. Requires Rust 1.88 or later.
 
 ## Install and configure
 
@@ -18,7 +18,7 @@ Add the crate to your `Cargo.toml`, with Tokio to run its async methods and serd
 
 ```toml
 [dependencies]
-docspring = "4.4.0"
+docspring = "4.5.0"
 serde_json = "1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 ```
@@ -198,7 +198,7 @@ existing code, such as removing or renaming a field, go in a new API version
 ([API changes](https://docspring.com/docs/api-guide/openapi-schema/#api-changes)). So this SDK keeps working with
 responses that are newer than it is:
 
-- The model leaves out a response field added to the API after this release.
+- The model keeps a response field added to the API after this release in its `additional_properties` map, as a `serde_json::Value`. The objects defined inside a model, such as a template's `document`, leave it out.
 - An enum value added to the API after this release comes back as the API sent it: handle values you don't recognize.
 
 Upgrade the SDK to read new fields and enum values. The [changelog](https://github.com/DocSpring/docspring-rust/blob/main/CHANGELOG.md) lists
@@ -211,6 +211,7 @@ This SDK is generated from DocSpring's [OpenAPI spec](https://docspring.com/api-
 The fork changes the Rust generator:
 
 - An enum value added to the API after this release comes back as the enum's `Unknown` variant, with the value as the API sent it, instead of failing the whole response. Enum types are `#[non_exhaustive]`, `as_str()` gives the value, `is_known()` says whether this release knows it, and `VALUES` lists the ones it knows.
+- A response model keeps the fields this release doesn't know in `additional_properties`, where stock OpenAPI Generator drops them. Build a response model yourself (a mock's return value) with `..Default::default()` after the fields you set, so a field added later doesn't break your code. `new()` takes every required field, so a required field added later breaks a call to it.
 - An error response's variant comes from its status. Stock OpenAPI Generator decodes the first variant the body fits, so a 404 came back as `Status422`. `ResponseContent` keeps the response's headers, such as a 429's `Retry-After`.
 - Date-time query parameters are sent in RFC 3339 format, and the multipart operations (`upload_template`, `upload_template_document`) compile.
 

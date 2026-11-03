@@ -20,11 +20,18 @@ pub struct EmailDomainList {
     /// Pass it as `cursor` to get the next page. Null on the last page.
     #[serde(rename = "next_cursor", deserialize_with = "Option::deserialize")]
     pub next_cursor: Option<String>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl EmailDomainList {
     /// A page of the account's email domains, newest first.
     pub fn new(data: Vec<models::EmailDomain>, next_cursor: Option<String>) -> EmailDomainList {
-        EmailDomainList { data, next_cursor }
+        EmailDomainList {
+            data,
+            next_cursor,
+            additional_properties: serde_json::Map::new(),
+        }
     }
 }

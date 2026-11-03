@@ -8,6 +8,7 @@ Name | Type | Description | Notes
 **error_message** | Option<**String**> | Why the images couldn't be made, when `state` is `error`. | 
 **page_count** | Option<**i32**> | How many pages have an image. Null until the images have been made. | 
 **pages** | Option<[**Vec<models::PageImage>**](PageImage.md)> | An image of each page, in order: `pages[0]` is page 1. Lists of submissions leave it out (null): get the submission to see them. Empty until the images have been made. | 
+**additional_properties** | **serde_json::Map<String, serde_json::Value>** | Properties the schema doesn't list (it allows additional properties), in the order they came (with serde_json's `preserve_order` feature) or sorted by name. | [optional]
 
 [[Back to Model list]](../README.md#methods) [[Back to API list]](../README.md#methods) [[Back to README]](../README.md)
 

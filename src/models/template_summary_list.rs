@@ -20,6 +20,9 @@ pub struct TemplateSummaryList {
     /// Pass it as `cursor` to get the next page. Null on the last page.
     #[serde(rename = "next_cursor", deserialize_with = "Option::deserialize")]
     pub next_cursor: Option<String>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl TemplateSummaryList {
@@ -28,6 +31,10 @@ impl TemplateSummaryList {
         data: Vec<models::TemplateSummary>,
         next_cursor: Option<String>,
     ) -> TemplateSummaryList {
-        TemplateSummaryList { data, next_cursor }
+        TemplateSummaryList {
+            data,
+            next_cursor,
+            additional_properties: serde_json::Map::new(),
+        }
     }
 }

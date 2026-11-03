@@ -149,6 +149,9 @@ pub struct TemplateDefaults {
     /// The border width of shapes, in whole points (at least 1).
     #[serde(rename = "shape_border_width", skip_serializing_if = "Option::is_none")]
     pub shape_border_width: Option<f64>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl TemplateDefaults {
@@ -175,6 +178,7 @@ impl TemplateDefaults {
             shape_fill_color: None,
             shape_border_color: None,
             shape_border_width: None,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

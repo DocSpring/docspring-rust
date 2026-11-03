@@ -29,6 +29,9 @@ pub struct ErrorDetail {
     /// For a batch item that failed validation, the ID of the submission recorded for it.
     #[serde(rename = "submission_id", skip_serializing_if = "Option::is_none")]
     pub submission_id: Option<String>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl ErrorDetail {
@@ -40,6 +43,7 @@ impl ErrorDetail {
             pointer: None,
             parameter: None,
             submission_id: None,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

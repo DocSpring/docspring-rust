@@ -9,6 +9,7 @@ Name | Type | Description | Notes
 **pointer** | Option<**String**> | A JSON pointer to the value in the request body (RFC 6901). An empty string means the whole body. In a submission's `data_errors`, it points into the request that created the submission. | [optional]
 **parameter** | Option<**String**> | The query parameter or header the detail is about. | [optional]
 **submission_id** | Option<**String**> | For a batch item that failed validation, the ID of the submission recorded for it. | [optional]
+**additional_properties** | **serde_json::Map<String, serde_json::Value>** | Properties the schema doesn't list (it allows additional properties), in the order they came (with serde_json's `preserve_order` feature) or sorted by name. | [optional]
 
 [[Back to Model list]](../README.md#methods) [[Back to API list]](../README.md#methods) [[Back to README]](../README.md)
 

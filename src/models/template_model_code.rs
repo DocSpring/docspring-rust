@@ -23,6 +23,9 @@ pub struct TemplateModelCode {
     /// The source code of the types, starting with `root_type_name`.
     #[serde(rename = "code")]
     pub code: String,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl TemplateModelCode {
@@ -36,6 +39,7 @@ impl TemplateModelCode {
             lang,
             root_type_name,
             code,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

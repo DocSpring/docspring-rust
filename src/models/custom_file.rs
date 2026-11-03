@@ -32,6 +32,9 @@ pub struct CustomFile {
     /// When the custom file was last updated.
     #[serde(rename = "updated_at")]
     pub updated_at: chrono::DateTime<chrono::FixedOffset>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl CustomFile {
@@ -51,6 +54,7 @@ impl CustomFile {
             content_type,
             created_at,
             updated_at,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

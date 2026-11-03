@@ -17,11 +17,17 @@ pub struct AuthenticationCheck {
     /// Always true.
     #[serde(rename = "authenticated")]
     pub authenticated: bool,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl AuthenticationCheck {
     /// Returned when the Authorization header has a valid API token.
     pub fn new(authenticated: bool) -> AuthenticationCheck {
-        AuthenticationCheck { authenticated }
+        AuthenticationCheck {
+            authenticated,
+            additional_properties: serde_json::Map::new(),
+        }
     }
 }

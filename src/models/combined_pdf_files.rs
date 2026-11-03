@@ -16,11 +16,17 @@ use serde::{Deserialize, Serialize};
 pub struct CombinedPdfFiles {
     #[serde(rename = "pdf", skip_serializing_if = "Option::is_none")]
     pub pdf: Option<models::GeneratedFile>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl CombinedPdfFiles {
     /// A combined PDF's generated files, by format.
     pub fn new() -> CombinedPdfFiles {
-        CombinedPdfFiles { pdf: None }
+        CombinedPdfFiles {
+            pdf: None,
+            additional_properties: serde_json::Map::new(),
+        }
     }
 }

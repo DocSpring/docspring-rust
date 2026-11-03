@@ -25,6 +25,9 @@ pub struct SubmissionValidation {
     pub template_version: Option<String>,
     #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
     pub error: Option<models::ErrorInfo>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl SubmissionValidation {
@@ -39,6 +42,7 @@ impl SubmissionValidation {
             template_id,
             template_version,
             error: None,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

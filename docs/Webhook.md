@@ -24,6 +24,7 @@ Name | Type | Description | Notes
 **secret** | Option<**String**> | The key that signs each request (the X-DocSpring-Signature header), so you can check that a request came from DocSpring. Null for some webhooks created before signing existed. | 
 **created_at** | **chrono::DateTime<chrono::FixedOffset>** | When the webhook was created. | 
 **updated_at** | **chrono::DateTime<chrono::FixedOffset>** | When the webhook was last updated. | 
+**additional_properties** | **serde_json::Map<String, serde_json::Value>** | Properties the schema doesn't list (it allows additional properties), in the order they came (with serde_json's `preserve_order` feature) or sorted by name. | [optional]
 
 [[Back to Model list]](../README.md#methods) [[Back to API list]](../README.md#methods) [[Back to README]](../README.md)
 

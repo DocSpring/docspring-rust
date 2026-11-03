@@ -26,6 +26,9 @@ pub struct TemplatePageImages {
     /// An image of each page, in order: `pages[0]` is page 1. Their `download_url`s expire, so get them again when you need them.
     #[serde(rename = "pages")]
     pub pages: Vec<models::PageImage>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl TemplatePageImages {
@@ -41,6 +44,7 @@ impl TemplatePageImages {
             version,
             page_count,
             pages,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

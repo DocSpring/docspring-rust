@@ -30,6 +30,7 @@ Name | Type | Description | Notes
 **truncated_text** | Option<[**std::collections::HashMap<String, Vec<String>>**](Vec.md)> | The text of each field that didn't fit in it, by field name. Left out (null) with `data`, and empty once the submission has expired. | 
 **output_formats** | [**Vec<models::OutputFormat>**](OutputFormat.md) | What the submission makes: `pdf`, `docx` (a Word document, from a Word template), `odt` (an OpenDocument file, the format LibreOffice uses, converted from a Word template's Word document), and `png` (an image of each page of the PDF, up to 100 pages, which adds `pdf`) when you ask for it. Default `["pdf"]`, or a Word template's `output_format`. POST /submissions/{submission_id}/generate_files adds `png`, and a Word template's submission's `pdf`, `docx` or `odt`, to a processed submission. | 
 **preview_generated_at** | Option<**chrono::DateTime<chrono::FixedOffset>**> | When the preview PDF was generated. Null if there is no preview. | 
+**additional_properties** | **serde_json::Map<String, serde_json::Value>** | Properties the schema doesn't list (it allows additional properties), in the order they came (with serde_json's `preserve_order` feature) or sorted by name. | [optional]
 
 [[Back to Model list]](../README.md#methods) [[Back to API list]](../README.md#methods) [[Back to README]](../README.md)
 

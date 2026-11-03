@@ -12,6 +12,7 @@ Name | Type | Description | Notes
 **content_type** | **String** | The file's media type: `application/pdf`, `application/vnd.openxmlformats-officedocument.wordprocessingml.document` for a Word document, or `application/vnd.oasis.opendocument.text` for an OpenDocument file. | 
 **size** | Option<**i32**> | The file's size in bytes. Null until the file has been made. | 
 **sha256** | Option<**String**> | The SHA-256 hash of the file. Null until the file has been made. | 
+**additional_properties** | **serde_json::Map<String, serde_json::Value>** | Properties the schema doesn't list (it allows additional properties), in the order they came (with serde_json's `preserve_order` feature) or sorted by name. | [optional]
 
 [[Back to Model list]](../README.md#methods) [[Back to API list]](../README.md#methods) [[Back to README]](../README.md)
 

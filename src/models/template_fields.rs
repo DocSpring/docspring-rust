@@ -23,6 +23,9 @@ pub struct TemplateFields {
     /// The fields.
     #[serde(rename = "fields")]
     pub fields: Vec<models::Field>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl TemplateFields {
@@ -36,6 +39,7 @@ impl TemplateFields {
             template_id,
             version,
             fields,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

@@ -35,6 +35,9 @@ pub struct SubmissionAction {
     /// Why the upload failed, when `state` is `failed` or `error`.
     #[serde(rename = "error_message", deserialize_with = "Option::deserialize")]
     pub error_message: Option<String>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl SubmissionAction {
@@ -56,6 +59,7 @@ impl SubmissionAction {
             action_type,
             result_data,
             error_message,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

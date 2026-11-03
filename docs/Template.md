@@ -63,6 +63,7 @@ Name | Type | Description | Notes
 **layout** | Option<**std::collections::HashMap<String, serde_json::Value>**> | A page design's layout: its page setup, its sections and the elements placed in them, in the Page Designer layout format (https://docspring.com/docs/page-designer/layout-format/). Its JSON Schema is at https://docspring.com/schemas/page-designer/layout.v1.json. Null for other templates. Setting it replaces the whole layout, and DocSpring adds a field for each value it reads. Left out when a page design is created, it starts with an empty page. | 
 **embed_edit_token** | Option<**String**> | The token that opens the template in the embedded template editor. | 
 **versions** | [**Vec<models::TemplateVersion>**](TemplateVersion.md) | The template's published versions, newest first (up to 100). | 
+**additional_properties** | **serde_json::Map<String, serde_json::Value>** | Properties the schema doesn't list (it allows additional properties), in the order they came (with serde_json's `preserve_order` feature) or sorted by name. | [optional]
 
 [[Back to Model list]](../README.md#methods) [[Back to API list]](../README.md#methods) [[Back to README]](../README.md)
 

@@ -95,6 +95,9 @@ pub struct Submission {
         deserialize_with = "Option::deserialize"
     )]
     pub preview_generated_at: Option<chrono::DateTime<chrono::FixedOffset>>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl Submission {
@@ -154,6 +157,7 @@ impl Submission {
             truncated_text,
             output_formats,
             preview_generated_at,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

@@ -50,6 +50,9 @@ pub struct ErrorInfo {
     /// With `idempotency_key_in_use`, the webhook the first request with the key created.
     #[serde(rename = "webhook_id", skip_serializing_if = "Option::is_none")]
     pub webhook_id: Option<String>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl ErrorInfo {
@@ -72,6 +75,7 @@ impl ErrorInfo {
             folder_id: None,
             custom_file_id: None,
             webhook_id: None,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

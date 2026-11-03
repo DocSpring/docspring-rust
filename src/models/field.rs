@@ -308,6 +308,9 @@ pub struct Field {
     /// The field's own conditional logic rule: when other fields' values meet its conditions, the field is shown, made required, or both. Null when it has none. The template's rules (`field_dependencies`) can apply to the field too. Shared by every field with the same `name`.
     #[serde(rename = "dependencies", deserialize_with = "Option::deserialize")]
     pub dependencies: Option<models::FieldDependency>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl Field {
@@ -497,6 +500,7 @@ impl Field {
             image_scale_type,
             image_gravity,
             dependencies,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

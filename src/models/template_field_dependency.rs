@@ -29,6 +29,9 @@ pub struct TemplateFieldDependency {
     /// Marks a rule made for a field group in the template editor. Its targets outside the group are removed when the template is saved, and the rule is removed once the group has no fields.
     #[serde(rename = "group", skip_serializing_if = "Option::is_none")]
     pub group: Option<String>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl TemplateFieldDependency {
@@ -44,6 +47,7 @@ impl TemplateFieldDependency {
             conditions,
             targets,
             group: None,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

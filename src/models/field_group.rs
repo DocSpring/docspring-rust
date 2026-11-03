@@ -38,6 +38,9 @@ pub struct FieldGroup {
     /// PDF templates' lists only: submission data can have more items than the list's fields are numbered for. Default false.
     #[serde(rename = "allow_additional_items")]
     pub allow_additional_items: bool,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl FieldGroup {
@@ -61,6 +64,7 @@ impl FieldGroup {
             min_items,
             max_items,
             allow_additional_items,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

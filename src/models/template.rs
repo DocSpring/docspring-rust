@@ -217,6 +217,9 @@ pub struct Template {
     /// The template's published versions, newest first (up to 100).
     #[serde(rename = "versions")]
     pub versions: Vec<models::TemplateVersion>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl Template {
@@ -342,6 +345,7 @@ impl Template {
             layout,
             embed_edit_token,
             versions,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

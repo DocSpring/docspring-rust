@@ -17,11 +17,17 @@ pub struct EmailActionTestEmail {
     /// The address the test email went to, the email address of the API token's user.
     #[serde(rename = "sent_to")]
     pub sent_to: String,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl EmailActionTestEmail {
     /// A test email that was sent.
     pub fn new(sent_to: String) -> EmailActionTestEmail {
-        EmailActionTestEmail { sent_to }
+        EmailActionTestEmail {
+            sent_to,
+            additional_properties: serde_json::Map::new(),
+        }
     }
 }

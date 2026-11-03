@@ -35,6 +35,9 @@ pub struct SignatureRequestToken {
     /// When the token was created.
     #[serde(rename = "created_at")]
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
+    /// Properties the schema doesn't list (it allows additional properties), as they came.
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub additional_properties: serde_json::Map<String, serde_json::Value>,
 }
 
 impl SignatureRequestToken {
@@ -56,6 +59,7 @@ impl SignatureRequestToken {
             signature_request_url,
             expires_at,
             created_at,
+            additional_properties: serde_json::Map::new(),
         }
     }
 }

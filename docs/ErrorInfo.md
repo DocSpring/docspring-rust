@@ -15,6 +15,7 @@ Name | Type | Description | Notes
 **folder_id** | Option<**String**> | With `idempotency_key_in_use`, the folder the first request with the key created. | [optional]
 **custom_file_id** | Option<**String**> | With `idempotency_key_in_use`, the custom file the first request with the key created. | [optional]
 **webhook_id** | Option<**String**> | With `idempotency_key_in_use`, the webhook the first request with the key created. | [optional]
+**additional_properties** | **serde_json::Map<String, serde_json::Value>** | Properties the schema doesn't list (it allows additional properties), in the order they came (with serde_json's `preserve_order` feature) or sorted by name. | [optional]
 
 [[Back to Model list]](../README.md#methods) [[Back to API list]](../README.md#methods) [[Back to README]](../README.md)
 

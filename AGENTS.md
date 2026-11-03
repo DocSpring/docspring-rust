@@ -90,6 +90,6 @@ keeps it.
 
 - List methods return `data` and `next_cursor`: pass `next_cursor` as `cursor` to get the next page.
 - Responses can be newer than this SDK, because DocSpring adds fields and enum values to API v2 without a new
-  version. The model leaves out a response field added to the API after this release. An enum value added after this release comes
+  version. The model keeps a response field added to the API after this release in its `additional_properties` map, as a `serde_json::Value`. The objects defined inside a model, such as a template's `document`, leave it out. An enum value added after this release comes
   back as the API sent it: handle values you don't recognize.
 - The methods are the `docspring::Api` trait's, and they're async, so run them in a Tokio runtime. Each one takes its operation's parameters, built with a builder (`CreateSubmissionParams::builder()`), so an optional parameter added to the API later doesn't break your code. With the `mockall` feature, `docspring::MockApi` stands in for the client in your tests.
