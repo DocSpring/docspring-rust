@@ -72,7 +72,7 @@ pub struct UpdateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub editable_submissions: Option<bool>,
-    /// The sites that can embed the template's live signature requests and its embedded template editor: a host such as `app.example.com`, with an optional leading wildcard (`*.example.com`), port (`localhost:3000`) or scheme (`https://app.example.com`; without one, `http` and `https` both work), without a path. Browsers open a live signature request in a frame only on these sites (and DocSpring's), so with an empty list it can't be embedded anywhere; a test signature request can be embedded on any site. The embedded template editor loads only for a page on one of these sites (by its Referer or Origin header), and on any site when the list is empty. Forms embedded on a page (Visual Forms JS and the simple form) aren't restricted.
+    /// The sites that can embed the template's live signature requests and its embedded template editor: a host such as `app.example.com`, with an optional leading wildcard (`*.example.com`), port (`localhost:3000`) or scheme (`https://app.example.com`; without one, `http` and `https` both work), without a path. Each one is stored in lowercase, without a trailing slash. Browsers open a live signature request in a frame only on these sites (and DocSpring's), so with an empty list it can't be embedded anywhere; a test signature request can be embedded on any site. The embedded template editor loads only for a page on one of these sites (by its Referer or Origin header), and on any site when the list is empty. Forms embedded on a page (Visual Forms JS and Web Forms JS) aren't restricted.
     #[serde(rename = "embed_domains", skip_serializing_if = "Option::is_none")]
     pub embed_domains: Option<Vec<String>>,
     /// Allow the embedded template editor to change sensitive template settings (webhooks, redirect URL, encryption, public access, expiration and so on).
@@ -134,7 +134,7 @@ pub struct UpdateTemplateRequest {
     /// Allow anyone to fill in the template's web form.
     #[serde(rename = "public_web_form", skip_serializing_if = "Option::is_none")]
     pub public_web_form: Option<bool>,
-    /// Where the web form sends people after they submit it.
+    /// Where the web form sends people after they submit it, instead of showing its success screen. After its `?` or `#`, it can have variables such as `{{ data.first_name }}`, which the form fills in with what they submitted.
     #[serde(
         rename = "redirect_url",
         default,
@@ -195,6 +195,28 @@ pub struct UpdateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub signature_request_signing_url: Option<Option<String>>,
+    /// The title of the web form's success screen. When it's null or empty, the screen says "Thanks for filling out" and the template's name. It can have variables such as `{{ data.first_name }}`.
+    #[serde(
+        rename = "success_title",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub success_title: Option<Option<String>>,
+    /// A message under the title of the web form's success screen, as plain text. Line breaks show, and web addresses become links. It can have variables such as `{{ data.first_name }}`.
+    #[serde(
+        rename = "success_message",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub success_message: Option<Option<String>>,
+    /// Whether the web form's success screen has a "Fill out again" button, which clears the form so someone can fill it in again.
+    #[serde(
+        rename = "show_fill_again_button",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub show_fill_again_button: Option<bool>,
     /// A Slack incoming webhook URL that is notified about the template's submissions. It's never returned; `has_slack_webhook_url` says if it's set.
     #[serde(
         rename = "slack_webhook_url",
@@ -212,6 +234,9 @@ pub struct UpdateTemplateRequest {
     /// Changes to the settings of the template's field groups, each with the `name` of the group it changes. Settings left out keep their values, and groups left out are unchanged.
     #[serde(rename = "field_groups", skip_serializing_if = "Option::is_none")]
     pub field_groups: Option<Vec<models::FieldGroupInput>>,
+    /// The web form's sections, in order. Setting them replaces all of the sections; an empty list removes them.
+    #[serde(rename = "form_sections", skip_serializing_if = "Option::is_none")]
+    pub form_sections: Option<Vec<models::TemplateFormSectionInput>>,
     /// The field names that people using the embedded template editor choose from, each with the data type and settings a field gets when it's given that name. Setting it replaces the whole list; an empty list turns them off.
     #[serde(rename = "predefined_fields", skip_serializing_if = "Option::is_none")]
     pub predefined_fields: Option<Vec<models::PredefinedFieldInput>>,
@@ -313,10 +338,14 @@ impl UpdateTemplateRequest {
             signature_request_notification_emails: None,
             signature_request_reply_to: None,
             signature_request_signing_url: None,
+            success_title: None,
+            success_message: None,
+            show_fill_again_button: None,
             slack_webhook_url: None,
             defaults: None,
             field_dependencies: None,
             field_groups: None,
+            form_sections: None,
             predefined_fields: None,
             predefined_fields_sample_data: None,
             html: None,

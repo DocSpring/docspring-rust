@@ -86,7 +86,7 @@ pub struct Template {
     /// Generate PDFs whose text and check fields stay fillable ("Generate Editable PDFs"). A submission's `editable` overrides it.
     #[serde(rename = "editable_submissions")]
     pub editable_submissions: bool,
-    /// The sites that can embed the template's live signature requests and its embedded template editor: a host such as `app.example.com`, with an optional leading wildcard (`*.example.com`), port (`localhost:3000`) or scheme (`https://app.example.com`; without one, `http` and `https` both work), without a path. Browsers open a live signature request in a frame only on these sites (and DocSpring's), so with an empty list it can't be embedded anywhere; a test signature request can be embedded on any site. The embedded template editor loads only for a page on one of these sites (by its Referer or Origin header), and on any site when the list is empty. Forms embedded on a page (Visual Forms JS and the simple form) aren't restricted.
+    /// The sites that can embed the template's live signature requests and its embedded template editor: a host such as `app.example.com`, with an optional leading wildcard (`*.example.com`), port (`localhost:3000`) or scheme (`https://app.example.com`; without one, `http` and `https` both work), without a path. Each one is stored in lowercase, without a trailing slash. Browsers open a live signature request in a frame only on these sites (and DocSpring's), so with an empty list it can't be embedded anywhere; a test signature request can be embedded on any site. The embedded template editor loads only for a page on one of these sites (by its Referer or Origin header), and on any site when the list is empty. Forms embedded on a page (Visual Forms JS and Web Forms JS) aren't restricted.
     #[serde(rename = "embed_domains")]
     pub embed_domains: Vec<String>,
     /// Allow the embedded template editor to change sensitive template settings (webhooks, redirect URL, encryption, public access, expiration and so on).
@@ -125,7 +125,7 @@ pub struct Template {
     /// Allow anyone to fill in the template's web form.
     #[serde(rename = "public_web_form")]
     pub public_web_form: bool,
-    /// Where the web form sends people after they submit it.
+    /// Where the web form sends people after they submit it, instead of showing its success screen. After its `?` or `#`, it can have variables such as `{{ data.first_name }}`, which the form fills in with what they submitted.
     #[serde(rename = "redirect_url", deserialize_with = "Option::deserialize")]
     pub redirect_url: Option<String>,
     /// How DocSpring's completed emails send the signed PDF to your signers and CCs: `attachment` (attached, or a download link when it's too big to attach) or `link` (a download link). Null uses your account's rule: a link if your account has signed a BAA, otherwise attached. PDF templates only. A signature request uses the value it had when the request was created.
@@ -164,6 +164,15 @@ pub struct Template {
         deserialize_with = "Option::deserialize"
     )]
     pub signature_request_signing_url: Option<String>,
+    /// The title of the web form's success screen. When it's null or empty, the screen says "Thanks for filling out" and the template's name. It can have variables such as `{{ data.first_name }}`.
+    #[serde(rename = "success_title", deserialize_with = "Option::deserialize")]
+    pub success_title: Option<String>,
+    /// A message under the title of the web form's success screen, as plain text. Line breaks show, and web addresses become links. It can have variables such as `{{ data.first_name }}`.
+    #[serde(rename = "success_message", deserialize_with = "Option::deserialize")]
+    pub success_message: Option<String>,
+    /// Whether the web form's success screen has a "Fill out again" button, which clears the form so someone can fill it in again.
+    #[serde(rename = "show_fill_again_button")]
+    pub show_fill_again_button: bool,
     /// Whether `slack_webhook_url` is set.
     #[serde(rename = "has_slack_webhook_url")]
     pub has_slack_webhook_url: bool,
@@ -178,6 +187,9 @@ pub struct Template {
     /// The groups of the template's fields, with their settings. A field's name puts it in groups: `address/city` is in the group `address`, and `items/0/price` is in the list `items` and its items' group `items/~`.
     #[serde(rename = "field_groups")]
     pub field_groups: Vec<models::FieldGroup>,
+    /// The web form's sections, in order: Web Forms JS and the hosted web form show one section at a time. Empty when the template has none, and the web form shows all of its fields together, in the order the fields endpoint lists them. A field that no section lists (one added later) goes after the field before it in that order, in that field's section.
+    #[serde(rename = "form_sections")]
+    pub form_sections: Vec<models::TemplateFormSection>,
     /// The field names that people using the embedded template editor choose from, each with the data type and settings a field gets when it's given that name. Setting it replaces the whole list; an empty list turns them off.
     #[serde(rename = "predefined_fields")]
     pub predefined_fields: Vec<models::PredefinedField>,
@@ -268,11 +280,15 @@ impl Template {
         signature_request_notification_emails: Vec<String>,
         signature_request_reply_to: Option<String>,
         signature_request_signing_url: Option<String>,
+        success_title: Option<String>,
+        success_message: Option<String>,
+        show_fill_again_button: bool,
         has_slack_webhook_url: bool,
         last_changed_by: Option<models::TemplateActor>,
         defaults: models::TemplateDefaults,
         field_dependencies: Vec<models::TemplateFieldDependency>,
         field_groups: Vec<models::FieldGroup>,
+        form_sections: Vec<models::TemplateFormSection>,
         predefined_fields: Vec<models::PredefinedField>,
         predefined_fields_sample_data: Option<std::collections::HashMap<String, serde_json::Value>>,
         html: Option<String>,
@@ -329,11 +345,15 @@ impl Template {
             signature_request_notification_emails,
             signature_request_reply_to,
             signature_request_signing_url,
+            success_title,
+            success_message,
+            show_fill_again_button,
             has_slack_webhook_url,
             last_changed_by,
             defaults,
             field_dependencies,
             field_groups,
+            form_sections,
             predefined_fields,
             predefined_fields_sample_data,
             html,

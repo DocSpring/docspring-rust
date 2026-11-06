@@ -35,7 +35,7 @@ pub struct SubmissionInput {
     /// Seconds after the PDF is generated until the submission expires, up to 10 years (315360000). Default the template's expiration setting. A submission that isn't processed, such as one with invalid data, is kept for at least 48 hours. The demo API token's submissions expire within an hour: up to 3600, and that's their default.
     #[serde(rename = "expires_in", skip_serializing_if = "Option::is_none")]
     pub expires_in: Option<i32>,
-    /// Changes to field settings for this submission only, by field name, such as `{"name": {"required": false, "font_size": 9}}`. A setting that identifies the field (`id`, `name`, `type`), that only the template sets (such as `description`), or that doesn't apply to the field's type and display type (such as `check_character` on a field displayed as text) is a 422. With `signature_requests`, `editable: true` is a 422, and a `default` for a signature or initials field makes the submission `invalid_data`.
+    /// Changes to field settings for this submission only, by field name, such as `{"name": {"required": false, "font_size": 9}}`. A setting that identifies the field (`id`, `name`, `type`), that only the template sets (such as `description`), or that doesn't apply to the field's type and display type (such as `check_character` on a field displayed as text) is a 422. A `default` for a signature or initials field makes the submission `invalid_data`. With `signature_requests`, `editable: true` is a 422.
     #[serde(rename = "field_overrides", skip_serializing_if = "Option::is_none")]
     pub field_overrides: Option<std::collections::HashMap<String, models::FieldOverride>>,
     /// For an HTML template, HTML to use instead of the template's.

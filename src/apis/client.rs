@@ -651,118 +651,129 @@ impl Client {
 /// struct for passing parameters to the method [`Api::add_template_fields`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct AddTemplateFieldsParams {
     /// The template's ID.
     pub template_id: String,
     /// The fields to add to the template's draft.
     pub body: models::AddTemplateFieldsRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::copy_template`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct CopyTemplateParams {
     /// The template's ID.
     pub template_id: String,
     /// Settings for the copy.
     pub body: Option<models::CopyTemplateRequest>,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_account_email_action`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct CreateAccountEmailActionParams {
     /// The account email action to create. Properties left out get their defaults, and it sends for every template unless it lists `template_ids` or `folder_ids`.
     pub body: models::CreateAccountEmailActionRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_combined_pdf`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct CreateCombinedPdfParams {
     /// The PDFs to merge, and the combined PDF's settings.
     pub body: models::CreateCombinedPdfRequest,
     /// Wait until the PDF has been generated before responding. Default true on sync.api hosts.
     pub wait: Option<bool>,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_custom_file_from_upload`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct CreateCustomFileFromUploadParams {
     /// The uploaded file to create the custom file from.
     pub body: models::CreateCustomFileFromUploadRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_email_action`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct CreateEmailActionParams {
     /// The template's ID.
     pub template_id: String,
     /// The email action to create. Properties left out get their defaults.
     pub body: models::CreateEmailActionRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_email_domain`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct CreateEmailDomainParams {
     /// The domain to add.
     pub body: models::CreateEmailDomainRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_folder`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct CreateFolderParams {
     /// The folder to create.
     pub body: models::CreateFolderRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_signature_request_event`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct CreateSignatureRequestEventParams {
     /// The signature request's ID.
     pub signature_request_id: String,
     /// The event to record.
     pub body: models::CreateSignatureRequestEventRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_signature_request_token`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct CreateSignatureRequestTokenParams {
     /// The signature request's ID.
     pub signature_request_id: String,
     /// The kind of link to make. Send no body for an `api` token.
     pub body: Option<models::CreateSignatureRequestTokenRequest>,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_submission`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct CreateSubmissionParams {
     /// The template's ID.
     pub template_id: String,
@@ -772,37 +783,40 @@ pub struct CreateSubmissionParams {
     pub version: Option<String>,
     /// Wait until the files have been generated before responding. Default true on sync.api hosts.
     pub wait: Option<bool>,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_submission_batch`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct CreateSubmissionBatchParams {
     /// The submissions to create, and the settings they share.
     pub body: models::CreateSubmissionBatchRequest,
     /// Wait until every file in the batch has been generated before responding. Default true on sync.api hosts.
     pub wait: Option<bool>,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_template`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct CreateTemplateParams {
     /// The template to create.
     pub body: models::CreateTemplateRequest,
     /// Wait until the PDF has been processed, a `document_url`'s PDF or Word document downloaded, and an OpenDocument file converted, before responding. Default true on sync.api hosts.
     pub wait: Option<bool>,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_template_preview`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct CreateTemplatePreviewParams {
     /// The template's ID.
     pub template_id: String,
@@ -810,129 +824,141 @@ pub struct CreateTemplatePreviewParams {
     pub body: models::CreateTemplatePreviewRequest,
     /// A published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` (the newest published version, or the draft when none has been published) or `draft`. Default `draft`.
     pub version: Option<String>,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::create_webhook`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct CreateWebhookParams {
     /// The webhook to create.
     pub body: models::CreateWebhookRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::delete_account_email_action`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct DeleteAccountEmailActionParams {
     /// The account email action's ID.
     pub email_action_id: String,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::delete_custom_file`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct DeleteCustomFileParams {
     /// The custom file's ID.
     pub custom_file_id: String,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::delete_email_action`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct DeleteEmailActionParams {
     /// The template's ID.
     pub template_id: String,
     /// The email action's ID.
     pub email_action_id: String,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::delete_email_action_customization`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct DeleteEmailActionCustomizationParams {
     /// The template's ID.
     pub template_id: String,
     /// The ID of one of your account's email actions that sends for the template.
     pub email_action_id: String,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::delete_email_domain`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct DeleteEmailDomainParams {
     /// The email domain's ID.
     pub email_domain_id: String,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::delete_folder`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct DeleteFolderParams {
     /// The folder's ID.
     pub folder_id: String,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::delete_template`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct DeleteTemplateParams {
     /// The template's ID.
     pub template_id: String,
     /// Delete only this published version (`1.2.0`) or the draft (`draft`, when no version has been published). Without it, the draft and every published version are deleted.
     pub version: Option<String>,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::delete_webhook`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct DeleteWebhookParams {
     /// The webhook's ID.
     pub webhook_id: String,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::expire_combined_pdf`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct ExpireCombinedPdfParams {
     /// The combined PDF's ID.
     pub combined_pdf_id: String,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::expire_submission`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct ExpireSubmissionParams {
     /// The submission's ID.
     pub submission_id: String,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::generate_submission_files`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct GenerateSubmissionFilesParams {
     /// The submission's ID.
     pub submission_id: String,
@@ -940,23 +966,25 @@ pub struct GenerateSubmissionFilesParams {
     pub body: models::GenerateSubmissionFilesRequest,
     /// Wait until the files have been generated before responding. Default true on sync.api hosts.
     pub wait: Option<bool>,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::generate_submission_preview`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct GenerateSubmissionPreviewParams {
     /// The submission's ID.
     pub submission_id: String,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::get_account_email_action`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct GetAccountEmailActionParams {
     /// The account email action's ID.
     pub email_action_id: String,
@@ -965,6 +993,7 @@ pub struct GetAccountEmailActionParams {
 /// struct for passing parameters to the method [`Api::get_combined_pdf`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct GetCombinedPdfParams {
     /// The combined PDF's ID.
     pub combined_pdf_id: String,
@@ -973,6 +1002,7 @@ pub struct GetCombinedPdfParams {
 /// struct for passing parameters to the method [`Api::get_custom_file`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct GetCustomFileParams {
     /// The custom file's ID.
     pub custom_file_id: String,
@@ -981,6 +1011,7 @@ pub struct GetCustomFileParams {
 /// struct for passing parameters to the method [`Api::get_email_action`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct GetEmailActionParams {
     /// The template's ID.
     pub template_id: String,
@@ -991,6 +1022,7 @@ pub struct GetEmailActionParams {
 /// struct for passing parameters to the method [`Api::get_email_domain`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct GetEmailDomainParams {
     /// The email domain's ID.
     pub email_domain_id: String,
@@ -999,6 +1031,7 @@ pub struct GetEmailDomainParams {
 /// struct for passing parameters to the method [`Api::get_folder`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct GetFolderParams {
     /// The folder's ID.
     pub folder_id: String,
@@ -1007,6 +1040,7 @@ pub struct GetFolderParams {
 /// struct for passing parameters to the method [`Api::get_signature_request`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct GetSignatureRequestParams {
     /// The signature request's ID.
     pub signature_request_id: String,
@@ -1015,6 +1049,7 @@ pub struct GetSignatureRequestParams {
 /// struct for passing parameters to the method [`Api::get_submission`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct GetSubmissionParams {
     /// The submission's ID.
     pub submission_id: String,
@@ -1023,6 +1058,7 @@ pub struct GetSubmissionParams {
 /// struct for passing parameters to the method [`Api::get_submission_batch`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct GetSubmissionBatchParams {
     /// The batch's ID.
     pub submission_batch_id: String,
@@ -1033,6 +1069,7 @@ pub struct GetSubmissionBatchParams {
 /// struct for passing parameters to the method [`Api::get_template`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct GetTemplateParams {
     /// The template's ID.
     pub template_id: String,
@@ -1043,6 +1080,7 @@ pub struct GetTemplateParams {
 /// struct for passing parameters to the method [`Api::get_template_diff`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct GetTemplateDiffParams {
     /// The template's ID.
     pub template_id: String,
@@ -1053,6 +1091,7 @@ pub struct GetTemplateDiffParams {
 /// struct for passing parameters to the method [`Api::get_template_model_code`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct GetTemplateModelCodeParams {
     /// The template's ID.
     pub template_id: String,
@@ -1067,6 +1106,7 @@ pub struct GetTemplateModelCodeParams {
 /// struct for passing parameters to the method [`Api::get_template_page_images`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct GetTemplatePageImagesParams {
     /// The template's ID.
     pub template_id: String,
@@ -1077,6 +1117,7 @@ pub struct GetTemplatePageImagesParams {
 /// struct for passing parameters to the method [`Api::get_template_preview`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct GetTemplatePreviewParams {
     /// The template's ID.
     pub template_id: String,
@@ -1087,6 +1128,7 @@ pub struct GetTemplatePreviewParams {
 /// struct for passing parameters to the method [`Api::get_template_schema`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct GetTemplateSchemaParams {
     /// The template's ID.
     pub template_id: String,
@@ -1097,6 +1139,7 @@ pub struct GetTemplateSchemaParams {
 /// struct for passing parameters to the method [`Api::get_webhook`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct GetWebhookParams {
     /// The webhook's ID.
     pub webhook_id: String,
@@ -1105,6 +1148,7 @@ pub struct GetWebhookParams {
 /// struct for passing parameters to the method [`Api::list_account_email_actions`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct ListAccountEmailActionsParams {
     /// How many items to return (1-100, default 50).
     pub limit: Option<i32>,
@@ -1115,6 +1159,7 @@ pub struct ListAccountEmailActionsParams {
 /// struct for passing parameters to the method [`Api::list_combined_pdfs`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct ListCombinedPdfsParams {
     /// How many items to return (1-100, default 50).
     pub limit: Option<i32>,
@@ -1125,6 +1170,7 @@ pub struct ListCombinedPdfsParams {
 /// struct for passing parameters to the method [`Api::list_custom_files`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct ListCustomFilesParams {
     /// How many items to return (1-100, default 50).
     pub limit: Option<i32>,
@@ -1135,6 +1181,7 @@ pub struct ListCustomFilesParams {
 /// struct for passing parameters to the method [`Api::list_email_actions`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct ListEmailActionsParams {
     /// The template's ID.
     pub template_id: String,
@@ -1147,6 +1194,7 @@ pub struct ListEmailActionsParams {
 /// struct for passing parameters to the method [`Api::list_email_domains`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct ListEmailDomainsParams {
     /// How many items to return (1-100, default 50).
     pub limit: Option<i32>,
@@ -1157,6 +1205,7 @@ pub struct ListEmailDomainsParams {
 /// struct for passing parameters to the method [`Api::list_folders`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct ListFoldersParams {
     /// Only list the folders in this folder. Without it, the list has every folder, at any depth.
     pub parent_folder_id: Option<String>,
@@ -1169,6 +1218,7 @@ pub struct ListFoldersParams {
 /// struct for passing parameters to the method [`Api::list_submissions`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct ListSubmissionsParams {
     /// Only list this template's submissions.
     pub template_id: Option<String>,
@@ -1193,6 +1243,7 @@ pub struct ListSubmissionsParams {
 /// struct for passing parameters to the method [`Api::list_template_fields`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct ListTemplateFieldsParams {
     /// The template's ID.
     pub template_id: String,
@@ -1203,6 +1254,7 @@ pub struct ListTemplateFieldsParams {
 /// struct for passing parameters to the method [`Api::list_template_submissions`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct ListTemplateSubmissionsParams {
     /// The template's ID.
     pub template_id: String,
@@ -1227,6 +1279,7 @@ pub struct ListTemplateSubmissionsParams {
 /// struct for passing parameters to the method [`Api::list_templates`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct ListTemplatesParams {
     /// Only list templates whose name contains this text (ignoring case). `%` and `_` match themselves.
     pub query: Option<String>,
@@ -1241,6 +1294,7 @@ pub struct ListTemplatesParams {
 /// struct for passing parameters to the method [`Api::list_webhooks`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct ListWebhooksParams {
     /// Only list webhooks that subscribe to this event.
     pub event_type: Option<models::WebhookEventType>,
@@ -1261,126 +1315,137 @@ pub struct ListWebhooksParams {
 /// struct for passing parameters to the method [`Api::move_folder`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct MoveFolderParams {
     /// The folder's ID.
     pub folder_id: String,
     /// Where to move the folder.
     pub body: models::MoveFolderRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::move_template`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct MoveTemplateParams {
     /// The template's ID.
     pub template_id: String,
     /// Where to move the template.
     pub body: models::MoveTemplateRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::publish_template_version`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct PublishTemplateVersionParams {
     /// The template's ID.
     pub template_id: String,
     /// The version to publish.
     pub body: models::PublishTemplateVersionRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::remove_template_fields`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct RemoveTemplateFieldsParams {
     /// The template's ID.
     pub template_id: String,
     /// The fields to remove from the template's draft.
     pub body: models::RemoveTemplateFieldsRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::rename_folder`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct RenameFolderParams {
     /// The folder's ID.
     pub folder_id: String,
     /// The folder's new name.
     pub body: models::RenameFolderRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::reorder_template_fields`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct ReorderTemplateFieldsParams {
     /// The template's ID.
     pub template_id: String,
     /// The new order of the fields in the template's draft.
     pub body: models::ReorderTemplateFieldsRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::restore_template_version`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct RestoreTemplateVersionParams {
     /// The template's ID.
     pub template_id: String,
     /// The version to restore.
     pub body: models::RestoreTemplateVersionRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::send_account_email_action_test_email`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct SendAccountEmailActionTestEmailParams {
     /// The account email action's ID.
     pub email_action_id: String,
     /// Which template the test email is for.
     pub body: Option<models::SendAccountEmailActionTestEmailRequest>,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::send_email_action_test_email`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct SendEmailActionTestEmailParams {
     /// The template's ID.
     pub template_id: String,
     /// The email action's ID.
     pub email_action_id: String,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::update_account_email_action`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct UpdateAccountEmailActionParams {
     /// The account email action's ID.
     pub email_action_id: String,
     /// The settings to change. Properties left out keep their values.
     pub body: models::UpdateAccountEmailActionRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::update_email_action`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct UpdateEmailActionParams {
     /// The template's ID.
     pub template_id: String,
@@ -1388,13 +1453,14 @@ pub struct UpdateEmailActionParams {
     pub email_action_id: String,
     /// The settings to change. Properties left out keep their values.
     pub body: models::UpdateEmailActionRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::update_email_action_customization`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct UpdateEmailActionCustomizationParams {
     /// The template's ID.
     pub template_id: String,
@@ -1402,37 +1468,40 @@ pub struct UpdateEmailActionCustomizationParams {
     pub email_action_id: String,
     /// The template's changes to the account email action, replacing any it had. Each setting you send is changed for this template, and the ones you leave out follow the account email action. `enabled: false` stops it sending for this template; left out, it sends.
     pub body: models::UpdateEmailActionCustomizationRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::update_signature_request`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct UpdateSignatureRequestParams {
     /// The signature request's ID.
     pub signature_request_id: String,
     /// The settings to change. Properties left out keep their values.
     pub body: models::UpdateSignatureRequestRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::update_template`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct UpdateTemplateParams {
     /// The template's ID.
     pub template_id: String,
     /// The settings to change. Properties left out keep their values.
     pub body: models::UpdateTemplateRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::update_template_document`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct UpdateTemplateDocumentParams {
     /// The template's ID.
     pub template_id: String,
@@ -1440,37 +1509,40 @@ pub struct UpdateTemplateDocumentParams {
     pub body: models::UpdateTemplateDocumentRequest,
     /// Wait until the PDF has been processed, a `document_url`'s PDF or Word document downloaded, and an OpenDocument file converted, before responding. Default true on sync.api hosts.
     pub wait: Option<bool>,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::update_template_fields`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct UpdateTemplateFieldsParams {
     /// The template's ID.
     pub template_id: String,
     /// The fields to change in the template's draft.
     pub body: models::UpdateTemplateFieldsRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::update_webhook`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct UpdateWebhookParams {
     /// The webhook's ID.
     pub webhook_id: String,
     /// The settings to change. Properties left out keep their values.
     pub body: models::UpdateWebhookRequest,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::upload_template`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct UploadTemplateParams {
     /// A PDF (for a PDF template) or a Word document (.docx or .odt, for a Word template). DocSpring converts an OpenDocument text file (.odt) to a Word document after responding: the template's `document.state` is `converting` until then (sync.api hosts wait for it).
     pub document: std::path::PathBuf,
@@ -1494,13 +1566,16 @@ pub struct UploadTemplateParams {
     pub field_logic: Option<models::FieldSetupLogic>,
     /// What each submission of a Word template makes unless its request sets `output_formats`: `docx` (a Word document), `odt` (an OpenDocument file, converted from the Word document) or `pdf`. Required when `document` is a Word document.
     pub output_format: Option<models::OutputFormat>,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// With `detect_fields`, whether AI field setup keeps the fields that only the office receiving the form fills in, such as a "For office use only" box (`true`), or leaves them out (`false`). Default: your account's template settings.
+    pub include_office_use_fields: Option<bool>,
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::upload_template_document`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct UploadTemplateDocumentParams {
     /// The template's ID.
     pub template_id: String,
@@ -1510,13 +1585,14 @@ pub struct UploadTemplateDocumentParams {
     pub wait: Option<bool>,
     /// Replace all of the template's fields with the fillable fields in the new PDF, once DocSpring has processed it (`document.field_reimport_state`). As on a first upload, the default typeface, font size, bold and color are taken from the PDF's fields; the template's other settings are kept. If the PDF has no fillable fields, the template keeps its fields. A locked template can't re-import its fields. Only for PDF templates: a Word template adds a field for each new tag.
     pub reimport_fields: Option<bool>,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::validate_submission`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct ValidateSubmissionParams {
     /// The template's ID.
     pub template_id: String,
@@ -1524,17 +1600,18 @@ pub struct ValidateSubmissionParams {
     pub body: models::ValidateSubmissionRequest,
     /// The template version to use: a published version (`1.2.0`, or `1` for the latest 1.x.x), `latest` (the newest published version, or the draft when none has been published) or `draft`. Default `latest`.
     pub version: Option<String>,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
 /// struct for passing parameters to the method [`Api::verify_email_domain`]
 #[derive(Clone, Debug, ::bon::Builder)]
 #[builder(on(String, into), on(std::path::PathBuf, into))]
+#[non_exhaustive]
 pub struct VerifyEmailDomainParams {
     /// The email domain's ID.
     pub email_domain_id: String,
-    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then.
+    /// A key of your own, such as a UUID, that makes it safe to send this request again: for 24 hours, DocSpring answers a request with the same key from the same API token with the first request's response (and an `Idempotent-Replayed: true` header) instead of processing it again. Send a new key with each new request, and the same key each time you send the same request again, such as after a timeout, a network error or a 5xx. The same key with a different request is a 422 `idempotency_key_reused`. A 409 `idempotency_key_in_use` with a `Retry-After` header means the first request is still being processed: send the request again then. A repeated response is the first one as it was, so its `download_url` links may have expired: use `permanent_url`, or get the record again for new links.
     pub idempotency_key: Option<String>,
 }
 
@@ -8448,6 +8525,7 @@ impl Api for Client {
             field_naming,
             field_logic,
             output_format,
+            include_office_use_fields,
             idempotency_key,
         } = params;
 
@@ -8557,6 +8635,14 @@ impl Api for Client {
                 serde_json::Value::String(local_var_text.clone()),
             );
             local_var_form = local_var_form.text("output_format", local_var_text);
+        }
+        if let Some(local_var_param_value) = include_office_use_fields {
+            let local_var_text = local_var_param_value.to_string();
+            local_var_form_fields.insert(
+                "include_office_use_fields".to_owned(),
+                serde_json::Value::String(local_var_text.clone()),
+            );
+            local_var_form = local_var_form.text("include_office_use_fields", local_var_text);
         }
         local_var_req_builder = local_var_req_builder.multipart(local_var_form);
 
