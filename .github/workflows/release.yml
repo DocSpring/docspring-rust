@@ -32,6 +32,9 @@ jobs:
           fi
       # Packages the crate and builds the packaged copy, as cargo publish does
       - run: cargo publish --dry-run
+      # Writes target/package/docspring-<version>.crate for the check below. The dry run's own copy isn't kept by
+      # every cargo: the runners' stable toolchain left none on 17 November 2026, where cargo 1.89 leaves it.
+      - run: cargo package --no-verify
       - name: Install shiplist
         run: |
           curl -fsSL -o "$RUNNER_TEMP/shiplist.tar.gz" https://github.com/DocSpring/shiplist/releases/download/v0.1.0/shiplist-v0.1.0-x86_64-unknown-linux-musl.tar.gz
