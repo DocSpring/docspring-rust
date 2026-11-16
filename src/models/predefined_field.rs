@@ -44,6 +44,14 @@ pub struct PredefinedField {
         skip_serializing_if = "Option::is_none"
     )]
     pub option_list: Option<Option<String>>,
+    /// The labels forms show for `option_list`'s values, by value, as a field's `option_labels`, such as `{"married_filing_jointly": "Married filing jointly"}`. Each key must be one of `option_list`'s values. A value without a label shows the value, or its sentence case when the values are lowercase words joined by underscores. Null gives no value a label of its own.
+    #[serde(
+        rename = "option_labels",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub option_labels: Option<Option<std::collections::HashMap<String, String>>>,
     /// Whether the template must have a field with this name. The embedded editor shows the names that are missing, and with `disableDoneButtonIfPredefinedFieldsMissing` keeps its Done button disabled until the template has them. Default false.
     #[serde(
         rename = "required_in_template",
@@ -64,6 +72,7 @@ impl PredefinedField {
             title: None,
             r#type,
             option_list: None,
+            option_labels: None,
             required_in_template: None,
             field_required: None,
         }

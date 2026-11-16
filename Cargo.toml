@@ -1,6 +1,6 @@
 [package]
 name = "docspring"
-version = "4.6.0"
+version = "4.7.0"
 authors = ["DocSpring <support@docspring.com>"]
 description = "Use DocSpring's API to fill PDF forms, generate PDFs and Word documents from HTML or Word templates, merge PDFs, and request legally binding e-signatures."
 license = "MIT"
@@ -11,8 +11,9 @@ resolver = "3"
 readme = "README.md"
 keywords = ["docspring", "pdf", "e-signature", "api", "sdk"]
 categories = ["api-bindings"]
-# The Markdown reference is on GitHub, which the README links to
-exclude = ["docs/", ".openapi-generator/", ".openapi-generator-ignore", ".travis.yml"]
+# The Markdown reference is on GitHub, which the README links to. The release workflow checks the crate against
+# .shiplist.yml (github_workflows/rust/.shiplist.yml).
+exclude = ["docs/", ".github/", ".gitignore", ".openapi-generator/", ".openapi-generator-ignore", ".shiplist.yml", ".travis.yml"]
 repository = "https://github.com/DocSpring/docspring-rust"
 documentation = "https://docs.rs/docspring"
 homepage = "https://docspring.com"

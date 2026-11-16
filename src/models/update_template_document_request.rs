@@ -29,6 +29,9 @@ pub struct UpdateTemplateDocumentRequest {
     /// Replace all of the template's fields with the fillable fields in the new PDF, once DocSpring has processed it (`document.field_reimport_state`). As on a first upload, the default typeface, font size, bold and color are taken from the PDF's fields; the template's other settings are kept. If the PDF has no fillable fields, the template keeps its fields. A locked template can't re-import its fields. Only for PDF templates: a Word template adds a field for each new tag.
     #[serde(rename = "reimport_fields", skip_serializing_if = "Option::is_none")]
     pub reimport_fields: Option<bool>,
+    /// Add a field for each value the template's code, Word document or layout reads for the first time, with a type worked out from how it's used. Existing fields keep their settings, and a field you deleted while the code still read the value stays deleted. Default true. Set it to false to manage the fields yourself with the fields endpoints: a form field whose field isn't on the template then fails its submissions and previews. Only for HTML templates, Word templates and page designs.
+    #[serde(rename = "sync_fields", skip_serializing_if = "Option::is_none")]
+    pub sync_fields: Option<bool>,
 }
 
 impl UpdateTemplateDocumentRequest {
@@ -40,6 +43,7 @@ impl UpdateTemplateDocumentRequest {
             document_base64: None,
             filename: None,
             reimport_fields: None,
+            sync_fields: None,
         }
     }
 }

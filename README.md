@@ -13,7 +13,7 @@ pull requests are welcome.
 Outside Rust code, the [DocSpring CLI](https://docspring.com/docs/cli/) calls the same API from a terminal or a
 shell script, and the [MCP server](https://docspring.com/docs/mcp/) connects AI assistants to your account.
 
-Version 4.6.0. Requires Rust 1.88 or later.
+Version 4.7.0. Requires Rust 1.88 or later.
 
 ## Install and configure
 
@@ -21,7 +21,7 @@ Add the crate to your `Cargo.toml`, with Tokio to run its async methods and serd
 
 ```toml
 [dependencies]
-docspring = "4.6.0"
+docspring = "4.7.0"
 serde_json = "1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 ```

@@ -92,6 +92,7 @@ docs/ModelCodeLanguage.md
 docs/MoveFolderRequest.md
 docs/MoveTemplateRequest.md
 docs/NumberConditionType.md
+docs/NumberPart.md
 docs/OutputFormat.md
 docs/PageFormat.md
 docs/PageImage.md
@@ -168,6 +169,8 @@ docs/TemplatePageImages.md
 docs/TemplatePageProcessingStatus.md
 docs/TemplatePreview.md
 docs/TemplatePreviewState.md
+docs/TemplateSignerRole.md
+docs/TemplateSignerRoleInput.md
 docs/TemplateSourcePdf.md
 docs/TemplateSummary.md
 docs/TemplateSummaryList.md
@@ -289,6 +292,7 @@ src/models/model_code_language.rs
 src/models/move_folder_request.rs
 src/models/move_template_request.rs
 src/models/number_condition_type.rs
+src/models/number_part.rs
 src/models/output_format.rs
 src/models/page_format.rs
 src/models/page_image.rs
@@ -365,6 +369,8 @@ src/models/template_page_images.rs
 src/models/template_page_processing_status.rs
 src/models/template_preview.rs
 src/models/template_preview_state.rs
+src/models/template_signer_role.rs
+src/models/template_signer_role_input.rs
 src/models/template_source_pdf.rs
 src/models/template_summary.rs
 src/models/template_summary_list.rs

@@ -44,7 +44,7 @@ pub struct CombinedPdf {
     /// An expired combined PDF's PDF, metadata, password and source URLs have been deleted.
     #[serde(rename = "expired")]
     pub expired: bool,
-    /// When the combined PDF expires (`expires_in` after it's generated). Null if it's kept until you delete it.
+    /// When the combined PDF expires (`expires_in`, or the account's expiry setting, after it's generated). Null if it's kept until you delete it.
     #[serde(rename = "expires_at", deserialize_with = "Option::deserialize")]
     pub expires_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     /// When the PDF was generated. Null until then.

@@ -57,12 +57,18 @@ pub struct UpdateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub allow_additional_properties: Option<bool>,
-    /// Visual forms and signature request forms show the Continue button as soon as the required fields are filled in, without visiting each optional field. The `allowSkippingOptionalFields` embed option overrides it.
+    /// Visual Forms JS 2.16.0 to 2.23.0 only: with it on, Continue takes the place of Next once the required fields are filled in. Later versions use `continue_before_optional_fields`.
     #[serde(
         rename = "allow_skipping_optional_fields",
         skip_serializing_if = "Option::is_none"
     )]
     pub allow_skipping_optional_fields: Option<bool>,
+    /// Visual forms and signature request forms show the Continue button next to Next as soon as the required fields are filled in, without visiting each optional field. Turned off, Continue shows in place of Next only once every field has a value or has been visited. The `allowSkippingOptionalFields` embed option overrides it.
+    #[serde(
+        rename = "continue_before_optional_fields",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub continue_before_optional_fields: Option<bool>,
     /// The hosted form that /templates/{template_id}/form shows when its URL has no `mode` parameter: `web` (the web form), `visual` (the visual form, where fields are filled in on the PDF) or `dual` (both, in tabs). Only PDF templates have a visual form, so other templates accept only `web`.
     #[serde(rename = "default_form_mode", skip_serializing_if = "Option::is_none")]
     pub default_form_mode: Option<models::TemplateFormMode>,
@@ -72,7 +78,7 @@ pub struct UpdateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub editable_submissions: Option<bool>,
-    /// The sites that can embed the template's live signature requests and its embedded template editor: a host such as `app.example.com`, with an optional leading wildcard (`*.example.com`), port (`localhost:3000`) or scheme (`https://app.example.com`; without one, `http` and `https` both work), without a path. Each one is stored in lowercase, without a trailing slash. Browsers open a live signature request in a frame only on these sites (and DocSpring's), so with an empty list it can't be embedded anywhere; a test signature request can be embedded on any site. The embedded template editor loads only for a page on one of these sites (by its Referer or Origin header), and on any site when the list is empty. Forms embedded on a page (Visual Forms JS and Web Forms JS) aren't restricted.
+    /// The sites that can embed the template's live signature requests, its embedded template editor and its visual form: a host such as `app.example.com`, with an optional leading wildcard (`*.example.com`), port (`localhost:3000`) or scheme (`https://app.example.com`; without one, `http` and `https` both work), without a path. Each one is stored in lowercase, without a trailing slash. Browsers open a live signature request in a frame only on these sites (and DocSpring's), so with an empty list it can't be embedded anywhere; a test signature request can be embedded on any site. The embedded template editor loads only for a page on one of these sites (by its Referer or Origin header), and on any site when the list is empty. A visual form embedded with Visual Forms JS loads only on these sites, and on any site when the list is empty. Web Forms JS isn't restricted.
     #[serde(rename = "embed_domains", skip_serializing_if = "Option::is_none")]
     pub embed_domains: Option<Vec<String>>,
     /// Allow the embedded template editor to change sensitive template settings (webhooks, redirect URL, encryption, public access, expiration and so on).
@@ -104,10 +110,10 @@ pub struct UpdateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub encrypt_pdfs_password: Option<Option<String>>,
-    /// Delete each submission's data and PDF after `expire_after` `expiration_interval`.
+    /// Delete each submission's data and files after `expire_after` `expiration_interval`, when `override_account_expiry` is on.
     #[serde(rename = "expire_submissions", skip_serializing_if = "Option::is_none")]
     pub expire_submissions: Option<bool>,
-    /// How many `expiration_interval`s a submission's data and PDF are kept for, when `expire_submissions` is on. At most 5256000 (10 years in minutes).
+    /// How many `expiration_interval`s a submission's data and PDF are kept for, when `expire_submissions` and `override_account_expiry` are on. At most 5256000 (10 years in minutes).
     #[serde(rename = "expire_after", skip_serializing_if = "Option::is_none")]
     pub expire_after: Option<i32>,
     /// The unit of `expire_after`.
@@ -142,7 +148,7 @@ pub struct UpdateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub redirect_url: Option<Option<String>>,
-    /// How DocSpring's completed emails send the signed PDF to your signers and CCs: `attachment` (attached, or a download link when it's too big to attach) or `link` (a download link). Null uses your account's rule: a link if your account has signed a BAA, otherwise attached. PDF templates only. A signature request uses the value it had when the request was created.
+    /// How DocSpring's completed emails send the signed PDF to your signers and CCs: `attachment` (attached, or a download link when it's too big to attach) or `link` (a download link). Null uses your account's rule: a link if your account has signed a BAA, otherwise attached. A signature request uses the value it had when the request was created.
     #[serde(
         rename = "signature_request_email_attachments",
         default,
@@ -151,7 +157,7 @@ pub struct UpdateTemplateRequest {
     )]
     pub signature_request_email_attachments:
         Option<Option<models::SignatureRequestEmailAttachments>>,
-    /// The address DocSpring's emails to your signers come from: an address at one of your verified email domains, on the Growth plan or higher. Null sends them from DocSpring's shared address, with "via DocSpring" after the sender name. PDF templates only.
+    /// The address DocSpring's emails to your signers come from: an address at one of your verified email domains, on the Growth plan or higher. Null sends them from DocSpring's shared address, with "via DocSpring" after the sender name.
     #[serde(
         rename = "signature_request_from_address",
         default,
@@ -159,13 +165,13 @@ pub struct UpdateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub signature_request_from_address: Option<Option<String>>,
-    /// Puts a signing token in `signature_request_signing_url`, as `{{ token_id }}` and `{{ token_secret }}`, so your page can open the signing form without creating a token itself. The email then carries a credential: anyone who has it can open the form and sign. PDF templates only.
+    /// Puts a signing token in `signature_request_signing_url`, as `{{ token_id }}` and `{{ token_secret }}`, so your page can open the signing form without creating a token itself. The email then carries a credential: anyone who has it can open the form and sign.
     #[serde(
         rename = "signature_request_include_signing_token",
         skip_serializing_if = "Option::is_none"
     )]
     pub signature_request_include_signing_token: Option<bool>,
-    /// The sender name on the emails DocSpring sends your signers, as in "Acme via DocSpring". It can't contain an email address, a website or quotes. Null uses your account's name. PDF templates only.
+    /// The sender name on the emails DocSpring sends your signers, as in "Acme via DocSpring". It can't contain an email address, a website or quotes. Null uses your account's name.
     #[serde(
         rename = "signature_request_from_name",
         default,
@@ -173,13 +179,13 @@ pub struct UpdateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub signature_request_from_name: Option<Option<String>>,
-    /// Who DocSpring tells when a signature request's document is completed or declined, or an email bounces or can't be sent: members of your DocSpring team or addresses at your verified email domains. Empty means your account's owner. A submission's `notification_emails` replaces them. PDF templates only.
+    /// Who DocSpring tells when a signature request's document is completed or declined, or an email bounces or can't be sent: members of your DocSpring team or addresses at your verified email domains. Empty means your account's owner. A submission's `notification_emails` replaces them.
     #[serde(
         rename = "signature_request_notification_emails",
         skip_serializing_if = "Option::is_none"
     )]
     pub signature_request_notification_emails: Option<Vec<String>>,
-    /// Where your signers' replies to DocSpring's emails go: a member of your DocSpring team or an address at one of your verified email domains. Null means your account's owner. A submission's `reply_to` replaces it. PDF templates only.
+    /// Where your signers' replies to DocSpring's emails go: a member of your DocSpring team or an address at one of your verified email domains. Null means your account's owner. A submission's `reply_to` replaces it.
     #[serde(
         rename = "signature_request_reply_to",
         default,
@@ -187,7 +193,7 @@ pub struct UpdateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub signature_request_reply_to: Option<Option<String>>,
-    /// A page on your own site that the button in DocSpring's email to a signer opens, instead of DocSpring's signing page: an https URL on one of your verified email domains or a subdomain of one, on the Growth plan or higher. It must include `{{ signature_request_id }}`. Your page authenticates the signer, creates a token for the signature request, and opens the signing form with it. Null links to DocSpring's signing page. PDF templates only.
+    /// A page on your own site that the button in DocSpring's email to a signer opens, instead of DocSpring's signing page: an https URL on one of your verified email domains or a subdomain of one, on the Growth plan or higher. It must include `{{ signature_request_id }}`. Your page authenticates the signer, creates a token for the signature request, and opens the signing form with it. Null links to DocSpring's signing page.
     #[serde(
         rename = "signature_request_signing_url",
         default,
@@ -217,6 +223,12 @@ pub struct UpdateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub show_fill_again_button: Option<bool>,
+    /// Whether a web form with sections makes people fill them out in order. When true, a later section stays locked until they reach it with Next. When false, they can open any section from the list, and Next and Submit still check their answers.
+    #[serde(
+        rename = "form_sections_in_order",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub form_sections_in_order: Option<bool>,
     /// A Slack incoming webhook URL that is notified about the template's submissions. It's never returned; `has_slack_webhook_url` says if it's set.
     #[serde(
         rename = "slack_webhook_url",
@@ -237,6 +249,15 @@ pub struct UpdateTemplateRequest {
     /// The web form's sections, in order. Setting them replaces all of the sections; an empty list removes them.
     #[serde(rename = "form_sections", skip_serializing_if = "Option::is_none")]
     pub form_sections: Option<Vec<models::TemplateFormSectionInput>>,
+    /// The template's signer roles, in order. Setting them replaces the whole list: a role left out is deleted, and its fields are left unassigned. Give each role you keep its `id`.
+    #[serde(rename = "signer_roles", skip_serializing_if = "Option::is_none")]
+    pub signer_roles: Option<Vec<models::TemplateSignerRoleInput>>,
+    /// Who gets a copy of the completed document when DocSpring emails a submission's signers, with the submission's `cc`: email addresses, or `{{ variables }}` that name an address in the submission's data, such as `{{ agent.email }}`. A value the data doesn't have prints nothing, and an address that comes out blank is left out. The data has to have the value, so it's one of the template's fields (one the sender fills in) or the template allows additional properties: setting a variable that isn't a field is a `422` otherwise. They don't sign. Setting it replaces the whole list.
+    #[serde(
+        rename = "signature_request_cc",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub signature_request_cc: Option<Vec<String>>,
     /// The field names that people using the embedded template editor choose from, each with the data type and settings a field gets when it's given that name. Setting it replaces the whole list; an empty list turns them off.
     #[serde(rename = "predefined_fields", skip_serializing_if = "Option::is_none")]
     pub predefined_fields: Option<Vec<models::PredefinedFieldInput>>,
@@ -300,6 +321,15 @@ pub struct UpdateTemplateRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub layout: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
+    /// Whether the template's own expiry (`expire_submissions`, `expire_after` and `expiration_interval`) decides when all its submissions are deleted, with or without signature requests, including keeping them until you delete them. When false, the account's expiry settings do. Turning `expire_submissions` on also turns this on, unless the same request sets it, and so does creating a template with `expire_submissions` on or off.
+    #[serde(
+        rename = "override_account_expiry",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub override_account_expiry: Option<bool>,
+    /// Add a field for each value the template's code or layout reads for the first time, with a type worked out from how it's used. Existing fields keep their settings, and a field you deleted while the code still read the value stays deleted. Default true. Set it to false to manage the fields yourself with the fields endpoints: a form field whose field isn't on the template then fails its submissions and previews. Only for HTML templates and page designs: a Word template takes it with its document, in PUT /templates/{template_id}/document or PUT /templates/{template_id}/document/upload.
+    #[serde(rename = "sync_fields", skip_serializing_if = "Option::is_none")]
+    pub sync_fields: Option<bool>,
 }
 
 impl UpdateTemplateRequest {
@@ -315,6 +345,7 @@ impl UpdateTemplateRequest {
             ai_field_naming_language: None,
             allow_additional_properties: None,
             allow_skipping_optional_fields: None,
+            continue_before_optional_fields: None,
             default_form_mode: None,
             editable_submissions: None,
             embed_domains: None,
@@ -341,11 +372,14 @@ impl UpdateTemplateRequest {
             success_title: None,
             success_message: None,
             show_fill_again_button: None,
+            form_sections_in_order: None,
             slack_webhook_url: None,
             defaults: None,
             field_dependencies: None,
             field_groups: None,
             form_sections: None,
+            signer_roles: None,
+            signature_request_cc: None,
             predefined_fields: None,
             predefined_fields_sample_data: None,
             html: None,
@@ -355,6 +389,8 @@ impl UpdateTemplateRequest {
             html_engine_options: None,
             html_escape_data: None,
             layout: None,
+            override_account_expiry: None,
+            sync_fields: None,
         }
     }
 }

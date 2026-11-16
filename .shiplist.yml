@@ -1,0 +1,39 @@
+# Written by DocSpring/docspring's api_clients/scripts/generate from api_clients/github_workflows/rust/.shiplist.yml:
+# change it there.
+#
+# The files the crate may hold (https://github.com/DocSpring/shiplist). The release workflow packages it and fails if
+# it has any other file. Cargo.toml's `exclude` leaves the rest out.
+version: 1
+stages: [package]
+
+remove_before:
+  package:
+    include:
+      - '.*'
+      - '.*/**'
+      - 'docs/'
+    exclude:
+      # cargo package writes it
+      - { path: '.cargo_vcs_info.json', untracked: true }
+
+keep:
+  include:
+    - 'src/'
+    - 'tests/'
+    - 'AGENTS.md'
+    - 'CHANGELOG.md'
+    - 'Cargo.lock'
+    - 'Cargo.toml'
+    - 'LICENSE'
+    - 'README.md'
+    # The request validator's schemas, which the crate compiles in
+    - 'request_schemas.json'
+
+forbid:
+  - '**/.env'
+  - '**/.env.*'
+
+# What cargo package writes: the original manifest and the commit it packaged
+build_output:
+  - '.cargo_vcs_info.json'
+  - 'Cargo.toml.orig'

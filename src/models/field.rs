@@ -56,6 +56,12 @@ pub struct Field {
     /// String fields only: a comma-separated list of the values the field accepts. It's added to the template's data schema as an `enum`, forms show it as a select list, and an `editable` field becomes a dropdown. Shared by every field with the same `name`.
     #[serde(rename = "option_list", deserialize_with = "Option::deserialize")]
     pub option_list: Option<String>,
+    /// With `option_list`: the label forms show for each option, keyed by its value, such as `{"head_of_household": "Head of household"}`. The data, the API and webhooks keep the value, and the PDF prints it unless `print_option_labels` is set. An option without a label shows its value, or its sentence case when the options are lowercase words joined by underscores (`head_of_household` shows as "Head of household"). The template's data schema has them as `x-option-labels`. Each key must be one of the options, and each label must have some text. Shared by every field with the same `name`.
+    #[serde(rename = "option_labels", deserialize_with = "Option::deserialize")]
+    pub option_labels: Option<std::collections::HashMap<String, String>>,
+    /// Text display, with `option_labels`: the PDF prints the chosen option's label instead of its value, and an `editable` field's dropdown lists the labels. Shared by every field with the same `name`.
+    #[serde(rename = "print_option_labels")]
+    pub print_option_labels: bool,
     /// Combined fields only: a comma-separated list of the names of the fields whose values are combined, in order. Shared by every field with the same `name`.
     #[serde(rename = "combined_field_names")]
     pub combined_field_names: String,
@@ -95,6 +101,15 @@ pub struct Field {
     /// Barcode fields only: the barcode format, which the value must match. `code_128` and `pdf417` take any ASCII text; `code_39` and `code_93` take capital letters, digits, spaces and `- . $ / + %`; `code_25` takes digits; `ean_13` takes 12 digits, `ean_8` 7 digits and `upc_a` 11 digits (the check digit is added). Shared by every field with the same `name`.
     #[serde(rename = "barcode_symbology")]
     pub barcode_symbology: models::BarcodeSymbology,
+    /// With `comb`: the value fills the last boxes of the comb fields with this name, padded on the left with spaces, or with zeros with `comb_pad_with_zeros`, as amounts are written on paper forms. A number with `decimal_places` in one row of boxes lines up on its decimal point, which takes no box: the decimal places fill the last boxes. Date fields ignore it: a date prints in its format. Shared by every field with the same `name`.
+    #[serde(rename = "comb_fill_from_right")]
+    pub comb_fill_from_right: bool,
+    /// With `comb_fill_from_right`: pads the value on the left with zeros instead of spaces, such as `000123`. A negative number keeps its minus sign in the first box. Shared by every field with the same `name`.
+    #[serde(rename = "comb_pad_with_zeros")]
+    pub comb_pad_with_zeros: bool,
+    /// With `comb`, for string fields: only the value's digits print, one in each box, and any punctuation is left out, so `123-45-6789` fills the 9 boxes of an SSN. The template's data schema accepts as many digits as the boxes hold, with anything but letters between them. Number and date fields ignore it. Shared by every field with the same `name`.
+    #[serde(rename = "print_digits_only")]
+    pub print_digits_only: bool,
     /// Leaves the field off the PDF. It stays in the template's data schema (marked `x-hidden`) and on forms, so other fields, such as combined fields, can use its value. A hidden static check mark or shape isn't printed.
     #[serde(rename = "hidden")]
     pub hidden: bool,
@@ -191,10 +206,10 @@ pub struct Field {
     /// Text display only: splits the field into `comb_number_of_cells` boxes of equal width and prints one character, centered, in each.
     #[serde(rename = "comb")]
     pub comb: bool,
-    /// With `comb`: how many boxes the field has. The value's maximum length in the template's data schema is this plus `comb_value_offset`.
+    /// With `comb`: how many boxes the field has, up to 10,000. The value's maximum length in the template's data schema is the furthest that a comb field of its name reaches: its `comb_value_offset` plus its boxes. With `print_digits_only`, that many digits. A number field is split from its printed form (with `decimal_places`), and a number with a digit that no box prints (more digits than the boxes, or a digit where the offsets leave a gap) is a data error.
     #[serde(rename = "comb_number_of_cells")]
     pub comb_number_of_cells: i32,
-    /// With `comb`: the position, from 0, of the first character of the value that this field prints. For an SSN printed in boxes of 3, 2 and 4 digits, three fields named `ssn` use offsets 0, 3 and 5.
+    /// With `comb`: how many boxes of the value's row come before this field, from 0 to 10,000. The comb fields that share a name make one row of boxes, and each prints the row's characters from its offset. For an SSN printed in boxes of 3, 2 and 4 digits, three fields named `ssn` use offsets 0, 3 and 5. The fields that print a number's whole part (`number_part`) make a row of their own, and so do the ones that print its decimal places.
     #[serde(rename = "comb_value_offset")]
     pub comb_value_offset: i32,
     /// Shape display only: `square`, `rectangle`, `circle`, `ellipse`, `triangle` or `polygon`. A square or circle uses the smaller of `width` and `height`.
@@ -299,12 +314,18 @@ pub struct Field {
     /// Number fields with text display: prints the number with this many decimal places, from 0 (rounds to a whole number) to 99. Empty prints the number as it was sent.
     #[serde(rename = "decimal_places", deserialize_with = "Option::deserialize")]
     pub decimal_places: Option<i32>,
+    /// Number fields with text display: which part of the number this field prints. `all` prints the whole number, `whole` only the part before the decimal point (with a minus sign) and `decimals` only the decimal places. For an amount printed as `$ ____ . __`, two fields with the same name: one `whole`, and one `decimals` with `decimal_places` 2. The number is rounded once, to the `decimals` field's decimal places (2 when it sets none).
+    #[serde(rename = "number_part")]
+    pub number_part: models::NumberPart,
     /// Image fields only: how the image is resized to the field. `fit` keeps its proportions and fits it inside the field, which can leave empty space; `fill` keeps its proportions and crops it to fill the field; `stretch` stretches it to the field's size. Signatures and initials always fit.
     #[serde(rename = "image_scale_type")]
     pub image_scale_type: models::ImageScaleType,
     /// Image, signature and initials fields: where the image sits in the field with `fit`, or which part is kept with `fill`: `NorthWest` (top left), `North`, `NorthEast`, `West`, `Center`, `East`, `SouthWest`, `South` or `SouthEast` (bottom right). It also aligns typed signatures, and isn't used with `stretch`.
     #[serde(rename = "image_gravity")]
     pub image_gravity: models::ImageGravity,
+    /// Who fills in or signs the field when a submission has signature requests: one of the template's `signer_roles`, by its key, or `sender` for a field that submission data fills in, which no signer is asked for. Null when it has no role: a submission's only signer fills it in when data doesn't, and with two or more signature requests one of them has to list it in its `fields`. In an HTML or Word template, a field whose tag gives it a role (`{% form_field tenant_name, role: tenant %}`) has that one, which only the code can change. Shared by every field with the same `name`.
+    #[serde(rename = "signer_role", deserialize_with = "Option::deserialize")]
+    pub signer_role: Option<String>,
     /// The field's own conditional logic rule: when other fields' values meet its conditions, the field is shown, made required, or both. Null when it has none. The template's rules (`field_dependencies`) can apply to the field too. Shared by every field with the same `name`.
     #[serde(rename = "dependencies", deserialize_with = "Option::deserialize")]
     pub dependencies: Option<models::FieldDependency>,
@@ -330,6 +351,8 @@ impl Field {
         metadata: String,
         required: bool,
         option_list: Option<String>,
+        option_labels: Option<std::collections::HashMap<String, String>>,
+        print_option_labels: bool,
         combined_field_names: String,
         combined_field_type: models::CombinedFieldType,
         combined_field_separator: String,
@@ -343,6 +366,9 @@ impl Field {
         signature_allow_draw: bool,
         signature_allow_type: bool,
         barcode_symbology: models::BarcodeSymbology,
+        comb_fill_from_right: bool,
+        comb_pad_with_zeros: bool,
+        print_digits_only: bool,
         hidden: bool,
         x: f64,
         y: f64,
@@ -404,8 +430,10 @@ impl Field {
         invert_boolean_condition: bool,
         currency: bool,
         decimal_places: Option<i32>,
+        number_part: models::NumberPart,
         image_scale_type: models::ImageScaleType,
         image_gravity: models::ImageGravity,
+        signer_role: Option<String>,
         dependencies: Option<models::FieldDependency>,
     ) -> Field {
         Field {
@@ -423,6 +451,8 @@ impl Field {
             metadata,
             required,
             option_list,
+            option_labels,
+            print_option_labels,
             combined_field_names,
             combined_field_type,
             combined_field_separator,
@@ -436,6 +466,9 @@ impl Field {
             signature_allow_draw,
             signature_allow_type,
             barcode_symbology,
+            comb_fill_from_right,
+            comb_pad_with_zeros,
+            print_digits_only,
             hidden,
             x,
             y,
@@ -497,8 +530,10 @@ impl Field {
             invert_boolean_condition,
             currency,
             decimal_places,
+            number_part,
             image_scale_type,
             image_gravity,
+            signer_role,
             dependencies,
             additional_properties: serde_json::Map::new(),
         }

@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 **files** | [**models::CombinedPdfFiles**](CombinedPdfFiles.md) | The generated files, by format. Empty until the PDF has been generated, and once it has expired. | 
 **actions** | [**Vec<models::SubmissionAction>**](SubmissionAction.md) | The uploads of the PDF to your storage (account integrations). | 
 **expired** | **bool** | An expired combined PDF's PDF, metadata, password and source URLs have been deleted. | 
-**expires_at** | Option<**chrono::DateTime<chrono::FixedOffset>**> | When the combined PDF expires (`expires_in` after it's generated). Null if it's kept until you delete it. | 
+**expires_at** | Option<**chrono::DateTime<chrono::FixedOffset>**> | When the combined PDF expires (`expires_in`, or the account's expiry setting, after it's generated). Null if it's kept until you delete it. | 
 **processed_at** | Option<**chrono::DateTime<chrono::FixedOffset>**> | When the PDF was generated. Null until then. | 
 **created_at** | **chrono::DateTime<chrono::FixedOffset>** | When the combined PDF was created. | 
 **updated_at** | **chrono::DateTime<chrono::FixedOffset>** | When the combined PDF was last updated. | 

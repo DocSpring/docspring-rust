@@ -42,6 +42,20 @@ pub struct FieldOverride {
         skip_serializing_if = "Option::is_none"
     )]
     pub option_list: Option<Option<String>>,
+    /// The label forms show for each option, keyed by its value, such as `{"no": "No, I don't"}`. Each key must be one of the options.
+    #[serde(
+        rename = "option_labels",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub option_labels: Option<Option<std::collections::HashMap<String, String>>>,
+    /// Print the chosen option's label instead of its value.
+    #[serde(
+        rename = "print_option_labels",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub print_option_labels: Option<bool>,
     /// The names of the fields a combined field joins, separated by commas.
     #[serde(
         rename = "combined_field_names",
@@ -92,6 +106,18 @@ pub struct FieldOverride {
     /// The kind of barcode a field with display_type `barcode` prints.
     #[serde(rename = "barcode_symbology", skip_serializing_if = "Option::is_none")]
     pub barcode_symbology: Option<models::BarcodeSymbology>,
+    /// Fill the last boxes of the field's comb fields, padding the value on the left, as amounts are written on paper forms.
+    #[serde(
+        rename = "comb_fill_from_right",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub comb_fill_from_right: Option<bool>,
+    /// With `comb_fill_from_right`, pad the value with zeros instead of spaces.
+    #[serde(
+        rename = "comb_pad_with_zeros",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub comb_pad_with_zeros: Option<bool>,
     /// Leave the field off the PDF. Its value is still in the data, and combined fields can use it.
     #[serde(rename = "hidden", skip_serializing_if = "Option::is_none")]
     pub hidden: Option<bool>,
@@ -211,7 +237,7 @@ pub struct FieldOverride {
         skip_serializing_if = "Option::is_none"
     )]
     pub comb_number_of_cells: Option<i32>,
-    /// The character of the value that the first box starts from, for a value split over several comb fields (such as the parts of a Social Security number).
+    /// How many boxes of the value's row come before this field, for a value split over several comb fields (such as the parts of a Social Security number).
     #[serde(rename = "comb_value_offset", skip_serializing_if = "Option::is_none")]
     pub comb_value_offset: Option<i32>,
     /// The shape a field with display_type `shape` draws.
@@ -331,6 +357,9 @@ pub struct FieldOverride {
         skip_serializing_if = "Option::is_none"
     )]
     pub decimal_places: Option<Option<i32>>,
+    /// Which part of a number field's number this field prints: the whole number, only the part before the decimal point, or only the decimal places.
+    #[serde(rename = "number_part", skip_serializing_if = "Option::is_none")]
+    pub number_part: Option<models::NumberPart>,
     /// How an image is resized to its field.
     #[serde(rename = "image_scale_type", skip_serializing_if = "Option::is_none")]
     pub image_scale_type: Option<models::ImageScaleType>,
@@ -349,6 +378,8 @@ impl FieldOverride {
             title: None,
             required: None,
             option_list: None,
+            option_labels: None,
+            print_option_labels: None,
             combined_field_names: None,
             combined_field_type: None,
             combined_field_separator: None,
@@ -358,6 +389,8 @@ impl FieldOverride {
             signature_allow_draw: None,
             signature_allow_type: None,
             barcode_symbology: None,
+            comb_fill_from_right: None,
+            comb_pad_with_zeros: None,
             hidden: None,
             x: None,
             y: None,
@@ -404,6 +437,7 @@ impl FieldOverride {
             number_condition_range_exclusive_max: None,
             invert_boolean_condition: None,
             decimal_places: None,
+            number_part: None,
             image_scale_type: None,
             image_gravity: None,
         }

@@ -74,7 +74,7 @@ pub struct TemplateDefaults {
         skip_serializing_if = "Option::is_none"
     )]
     pub date_format: Option<Option<String>>,
-    /// How date-time fields are printed, as a strftime format such as `%m/%d/%Y %H:%M:%S`.
+    /// How date-time fields are printed, as a strftime format such as `%m/%d/%Y %H:%M`.
     #[serde(
         rename = "date_time_format",
         default,

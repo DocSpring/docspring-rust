@@ -20,6 +20,9 @@ pub struct SubmissionFiles {
     /// The audit trail of a submission with signature requests: who signed, when and how. It's also added to the end of the PDF when the template's `merge_audit_trail_pdf` is on.
     #[serde(rename = "audit_trail", skip_serializing_if = "Option::is_none")]
     pub audit_trail: Option<models::GeneratedFile>,
+    /// The audit data behind the audit trail of a submission with signature requests, as JSON: the hashes of the document and the audit trail, and each signing event with the salt and hash that DocSpring's signing record holds for it. It has who signed, like the audit trail, and goes when the submission expires, so keep it with the PDF and the audit trail.
+    #[serde(rename = "signing_manifest", skip_serializing_if = "Option::is_none")]
+    pub signing_manifest: Option<models::GeneratedFile>,
     /// The preview PDF from POST /submissions/{submission_id}/generate_preview, such as for a submission still waiting for its signature requests.
     #[serde(rename = "preview", skip_serializing_if = "Option::is_none")]
     pub preview: Option<models::GeneratedFile>,
@@ -42,6 +45,7 @@ impl SubmissionFiles {
         SubmissionFiles {
             pdf: None,
             audit_trail: None,
+            signing_manifest: None,
             preview: None,
             docx: None,
             odt: None,

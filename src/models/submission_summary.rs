@@ -56,7 +56,7 @@ pub struct SubmissionSummary {
     /// Empty unless you pass `include_files=true`: then the generated files, as when you get the submission, without the `png` pages' links (`files.png.pages` is null). Get the submission for its page images.
     #[serde(rename = "files")]
     pub files: models::SubmissionFiles,
-    /// An expired submission's data, metadata, password and PDF have been deleted.
+    /// An expired submission's data, metadata, password and files have been deleted, along with its signature requests and audit trail.
     #[serde(rename = "expired")]
     pub expired: bool,
     /// When the submission expires. Null if it's kept until you delete it.
