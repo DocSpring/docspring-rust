@@ -22,6 +22,9 @@
 | InvalidData | invalid_data |
 | RateLimited | rate_limited |
 | DailyEmailLimitReached | daily_email_limit_reached |
+| SupportFeedbackLimitReached | support_feedback_limit_reached |
+| SupportHelpLimitReached | support_help_limit_reached |
+| SupportTicketLimitReached | support_ticket_limit_reached |
 | InternalError | internal_error |
 | BadGateway | bad_gateway |
 | ServiceUnavailable | service_unavailable |
